@@ -14,12 +14,12 @@ let
       buildInputs = with pkgs.python37Packages; [numpy scipy scikitlearn numba] ;
       propogatedBuildInputs =  with pkgs.python37Packages;[numba];
     };
+
 in
   pkgs.mkShell {
     name = "simpleEnv";
     buildInputs = with pkgs; [
       python37
-#      yellowbrick
       python37Packages.numpy
       python37Packages.scikitlearn
       python37Packages.numba
