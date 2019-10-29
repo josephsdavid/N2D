@@ -89,10 +89,10 @@ harcluster.predict(manifold)
 # predictions are stored in harcluster.preds
 harcluster.visualize(y, y_names, dataset = "har", nclust = n_clusters)
 print(harcluster.assess(y))
-# (0.81212, 0.71669, 1.0)
+# (0.81212, 0.71669, 0.64013)
 ```
 
-Before viewing the results, lets talk about the metrics. The first metric is cluster accuracy, which we see here is 81.2%, which is absolutely state of the art for the HAR dataset. The next metric is NMI, which is another metric which describes cluster quality based on labels, independent of the number of clusters. We have an NMI of 0.717, which is again absolutely state of the art for this dataset. The last metric, ARI, shows another comparison between the actual groupings and our grouping. A value of 1 means the groupings are nearly the same, while a value of 0 means they completely disagree. We have a value of one which means we did very well!
+Before viewing the results, lets talk about the metrics. The first metric is cluster accuracy, which we see here is 81.2%, which is absolutely state of the art for the HAR dataset. The next metric is NMI, which is another metric which describes cluster quality based on labels, independent of the number of clusters. We have an NMI of 0.717, which is again absolutely state of the art for this dataset. The last metric, ARI, shows another comparison between the actual groupings and our grouping. A value of 1 means the groupings are nearly the same, while a value of 0 means they completely disagree. We have a value of 0.64013, which indicates that are predictions are more or less in agreement with the truth, however they are not perfect.
 
 ![N2D prediction](viz/har-n2d-predicted.png)
 
