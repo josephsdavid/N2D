@@ -163,7 +163,3 @@ This clearly did not go as well, however we can see that it is very easy to exte
 - [ ] Find an elegant way to deal with pre training weights
 - [ ] Package on Nix
 - [ ] Blog post?
-- [ ] 
-- [ ] 
-- [ ] 
-
