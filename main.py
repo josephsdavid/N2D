@@ -37,12 +37,14 @@ if len(K.tensorflow_backend._get_available_gpus()) > 0:
 
 x,y, y_names = nd.load_har()
 
-
-harcluster = nd.n2d(x, nclust = 6)
+n_clusters = 6
+harcluster = nd.n2d(x, nclust = n_clusters)
 
 harcluster.preTrainEncoder(weights = "har-1000-ae_weights.h5")
 
-harcluster.run()
+manifold = nd.UmapGMM(n_clusters)
 
-harcluster.visualize(y, y_names, dataset = "har", n_clusters = 6)
+harcluster.predict(manifold)
+
+harcluster.visualize(y, y_names, dataset = "har", nclust = n_clusters)
 print(harcluster.assess(y))

@@ -89,13 +89,12 @@ class AutoEncoder:
 
 
 
-class UmapClust:
+class UmapGMM:
     def __init__(self, nclust,
                  umapdim = 2,
                  umapN = 10,
                  umapMd = float(0),
-                 umapMetric = 'euclidean',
-                 clusterMethod = 'GMM'
+                 umapMetric = 'euclidean'
                  ):
         self.nclust = nclust
         self.manifoldInEmbedding = umap.UMAP(
@@ -111,7 +110,7 @@ class UmapClust:
             n_components = nclust, random_state = 0
         )
 
-    def run(self, hl):
+    def predict(self, hl):
         hle = self.manifoldInEmbedding.fit_transform(hl)
         self.clusterManifold.fit(hle)
         y_prob = self.clusterManifold.predict_proba(hle)
@@ -190,20 +189,13 @@ class n2d:
 
 
 
-    def run(self, umapdim = 2,
-                 umapN = 10,
-                 umapMd = float(0),
-                 umapMetric = 'euclidean',
-                 clusterMethod = 'GMM'):
+    def predict(self, manifoldLearner):
+
 
         hl = self.encoder.predict(self.x)
         self.hle = hl
-        umapclust  = UmapClust(nclust = self.nclust, umapdim = umapdim,
-                               umapN = umapN, umapMd = umapMd,
-                               umapMetric = umapMetric,
-                               clusterMethod = clusterMethod)
 
-        preds = umapclust.run(hl)
+        preds = manifoldLearner.predict(hl)
         self.preds = preds
 
     def assess(self, y):
@@ -214,13 +206,13 @@ class n2d:
 
         return(acc, nmi, ari)
 
-    def visualize(self, y, names, dataset = "fashion", n_clusters = 10):
+    def visualize(self, y, names, dataset = "fashion", nclust = 10):
         y = np.asarray(y)
         y_pred = np.asarray(self.preds)
         hle = self.hle
-        plot(hle, y, 'n2d', names, dataset = dataset, n_clusters = n_clusters)
+        plot(hle, y, 'n2d', names, dataset = dataset, n_clusters = nclust)
         y_pred_viz, _, _ = best_cluster_fit(y, y_pred)
-        plot(hle, y_pred_viz, 'n2d-predicted', names, dataset = dataset, n_clusters = n_clusters)
+        plot(hle, y_pred_viz, 'n2d-predicted', names, dataset = dataset, n_clusters = nclust)
 #x, y, y_names =  load_fashion()
 
 
