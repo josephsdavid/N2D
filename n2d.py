@@ -177,7 +177,7 @@ class n2d:
         y = np.asarray(y)
         acc = np.round(cluster_acc(y, self.preds), 5)
         nmi = np.round(metrics.normalized_mutual_info_score(y, self.preds), 5)
-        ari = np.round(metrics.adjusted_rand_score(y, self.preds))
+        ari = np.round(metrics.adjusted_rand_score(y, self.preds), 5)
 
         return(acc, nmi, ari)
 
