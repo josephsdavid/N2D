@@ -68,11 +68,12 @@ class UmapGMM:
                  umapdim = 2,
                  umapN = 10,
                  umapMd = float(0),
-                 umapMetric = 'euclidean'
+                 umapMetric = 'euclidean',
+                 random_state = 0
                  ):
         self.nclust = nclust
         self.manifoldInEmbedding = umap.UMAP(
-            random_state = 0,
+            random_state = random_state,
             metric = umapMetric,
             n_components = umapdim,
             n_neighbors = umapN,
@@ -81,7 +82,7 @@ class UmapGMM:
 
         self.clusterManifold = mixture.GaussianMixture(
             covariance_type = 'full',
-            n_components = nclust, random_state = 0
+            n_components = nclust, random_state = random_state
         )
 
     def predict(self, hl):
@@ -180,7 +181,7 @@ class n2d:
 
         return(acc, nmi, ari)
 
-    def visualize(self, y, names, dataset = "fashion", nclust = 10):
+    def visualize(self, y, names, dataset = "Generic_Dataset", nclust = 10):
         y = np.asarray(y)
         y_pred = np.asarray(self.preds)
         hle = self.hle

@@ -95,3 +95,45 @@ print(harcluster.assess(y))
 Before viewing the results, lets talk about the metrics. The first metric is cluster accuracy, which we see here is 81.2%, which is absolutely state of the art for the HAR dataset. The next metric is NMI, which is another metric which describes cluster quality based on labels, independent of the number of clusters. We have an NMI of 0.717, which is again absolutely state of the art for this dataset. The last metric, ARI, shows another comparison between the actual groupings and our grouping. A value of 1 means the groupings are nearly the same, while a value of 0 means they completely disagree. We have a value of one which means we did very well!
 
 ![N2D prediction](viz/har-n2d-predicted.png)
+
+N2D prediction
+
+![](viz/har-n2d.png)
+Actual clusters
+
+## Extending
+
+So far, this framework only includes the method for manifold clustering which the authors of the paper deemed best, umap with gaussian mixture clustering. Lets say however we want to try out spectral clustering instead:
+
+```python
+from sklearn.cluster import SpectralClustering
+class UmapSpectral:
+    def __init__(self, nclust,
+                 umapdim = 2,
+                 umapN = 10,
+                 umapMd = float(0),
+                 umapMetric = 'euclidean',
+		 random_state = 0
+                 ):
+        self.nclust = nclust
+	# change this bit for changing the manifold learner
+        self.manifoldInEmbedding = umap.UMAP(
+            random_state = random_state,
+            metric = umapMetric,
+            n_components = umapdim,
+            n_neighbors = umapN,
+            min_dist = umapMd
+        )
+	# change this bit to change the clustering mechanism
+        self.clusterManifold = SpectralClustering(
+            affinity = ''
+            n_components = nclust, random_state = random_state
+        )
+
+    def predict(self, hl):
+        hle = self.manifoldInEmbedding.fit_transform(hl)
+        self.clusterManifold.fit(hle)
+        y_prob = self.clusterManifold.predict_proba(hle)
+        y_pred = y_prob.argmax(1)
+        return(np.asarray(y_pred))
+```
