@@ -79,13 +79,13 @@ harcluster.preTrainEncoder(weights = "har-1000-ae_weights.h5")
 The next important step is to define the manifold clustering method to be used:
 
 ```python
-manifold = nd.UmapGMM(n_clusters)
+manifoldGMM = nd.UmapGMM(n_clusters)
 ```
 
 Now we can make a prediction, as well as visualize and assess
 
 ```python
-harcluster.predict(manifold)
+harcluster.predict(manifoldGMM)
 # predictions are stored in harcluster.preds
 harcluster.visualize(y, y_names, dataset = "har", nclust = n_clusters)
 print(harcluster.assess(y))
@@ -107,6 +107,7 @@ So far, this framework only includes the method for manifold clustering which th
 
 ```python
 from sklearn.cluster import SpectralClustering
+import umap
 class UmapSpectral:
     def __init__(self, nclust,
                  umapdim = 2,
@@ -125,15 +126,44 @@ class UmapSpectral:
             min_dist = umapMd
         )
 	# change this bit to change the clustering mechanism
-        self.clusterManifold = SpectralClustering(
-            affinity = ''
-            n_components = nclust, random_state = random_state
-        )
+	self.clusterManifold = SpectralClustering(
+		n_clusters = nclust
+		affinity = 'nearest_neighbors',
+		random_state = random_state
+	)
+
 
     def predict(self, hl):
+    # obviously if you change the clustering method or the manifold learner
+    # youll want to change the predict method too.
         hle = self.manifoldInEmbedding.fit_transform(hl)
         self.clusterManifold.fit(hle)
-        y_prob = self.clusterManifold.predict_proba(hle)
-        y_pred = y_prob.argmax(1)
-        return(np.asarray(y_pred))
+	y_pred = self.clusterManifold.fit_predict(hle)
+        return(y_pred)
 ```
+
+Now we can run and assess our new clustering method:
+
+```python
+manifoldSC = UmapSpectral(6)
+harcluster.predict(manifoldSC)
+print(harcluster.assess(y))
+# (0.40946, 0.42137, 0.14973)
+```
+
+This clearly did not go as well, however we can see that it is very easy to extend this library. We could also try out swapping UMAP for ISOMAP, the clustering method with kmeans, or maybe with a deep clustering technique. 
+
+
+# Roadmap
+
+- [ ] Package library
+- [ ] Implement other promising methods
+- [ ] Make assessment/visualization more extensible
+- [ ] Documentation?
+- [ ] Find an elegant way to deal with pre training weights
+- [ ] Package on Nix
+- [ ] Blog post?
+- [ ] 
+- [ ] 
+- [ ] 
+
