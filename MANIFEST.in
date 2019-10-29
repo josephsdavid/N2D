@@ -1,2 +1,9 @@
-recursive-include src *
-include README
+include README.md setup.py setup.cfg
+recursive-include n2d *.py
+
+recursive-exclude examples *
+recursive-exclude .ropeproject *
+
+
+
+exclude .envrc .gitignore shell.nix 

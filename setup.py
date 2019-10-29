@@ -16,7 +16,7 @@ setuptools.setup(
    #$ packages = setuptools.find_packages(exclude = [
     #    "*weights*", "*viz*", "*data*"
    # ]),
-    packages = ["src"],
+    packages = ['n2d'],
     license = 'MIT',
     classifiers = [
         "Programming Language :: Python :: 3",
