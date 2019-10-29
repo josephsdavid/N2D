@@ -25,32 +25,6 @@ from sklearn.utils.linear_assignment_ import linear_assignment
 import pandas as pd
 from keras.datasets import fashion_mnist
 
-def load_har():
-    x_train = pd.read_csv(
-        'data/har/train/X_train.txt',
-        sep=r'\s+',
-        header=None)
-    y_train = pd.read_csv('data/har/train/y_train.txt', header=None)
-    x_test = pd.read_csv('data/har/test/X_test.txt', sep=r'\s+', header=None)
-    y_test = pd.read_csv('data/har/test/y_test.txt', header=None)
-    x = np.concatenate((x_train, x_test))
-    y = np.concatenate((y_train, y_test))
-    # labels start at 1 so..
-    y = y - 1
-    y = y.reshape((y.size,))
-    y_names = {0: 'Walking', 1: 'Upstairs', 2: 'Downstairs', 3: 'Sitting', 4: 'Standing', 5: 'Laying', }
-    return x, y, y_names
-def load_fashion():
-    (x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
-    x = np.concatenate((x_train, x_test))
-    y = np.concatenate((y_train, y_test))
-    x = x.reshape((x.shape[0], -1))
-    x = np.divide(x, 255.)
-    y_names = {0: "T-shirt", 1: "Trouser", 2: "Pullover", 3: "Dress", 4: "Coat",
-               5: "Sandal", 6: "Shirt", 7: "Sneaker", 8: "Bag", 9: "Ankle Boot"}
-    return x, y, y_names
-from time import time
-
 
 class AutoEncoder:
     def __init__(self, dims, act = 'relu'):
@@ -177,14 +151,14 @@ class n2d:
 
     def preTrainEncoder(self,batch_size = 256, pretrain_epochs = 1000,
                      loss = 'mse', optimizer = 'adam',weights = None,
-                     verbose = 0, weightname = 'fashion'):
+                     verbose = 0, weight_id = 'generic_autoencoder'):
 
         self.autoencoder.pretrain(dataset = self.x,
                                   batch_size = batch_size,
                                   pretrain_epochs = pretrain_epochs,
                                   loss = loss,
                                   optimizer =optimizer, weights = weights,
-                                  verbose = verbose, weightname = weightname)
+                                  verbose = verbose, weightname = weight_id)
 
 
 

@@ -14,10 +14,6 @@ import tensorflow as tf
 from keras import backend as K
 
 # set up stuff
-
-
-
-
 os.environ['PYTHONHASHSEED'] = '0'
 
 
@@ -34,8 +30,8 @@ if len(K.tensorflow_backend._get_available_gpus()) > 0:
     K.set_session(sess)
 
 
-
-x,y, y_names = nd.load_har()
+import datasets as data
+x,y, y_names = data.load_har()
 
 n_clusters = 6
 harcluster = nd.n2d(x, nclust = n_clusters)
