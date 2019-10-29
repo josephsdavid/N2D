@@ -156,7 +156,7 @@ This clearly did not go as well, however we can see that it is very easy to exte
 
 # Roadmap
 
-- [ ] Package library
+- [x] Package library
 - [ ] Implement other promising methods
 - [ ] Make assessment/visualization more extensible
 - [ ] Documentation?
