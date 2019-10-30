@@ -47,16 +47,8 @@ os.environ['PYTHONHASHSEED'] = '0'
 
 
 rn.seed(0)
-tf.set_random_seed(0)
-np.random.seed(0)
 
-if len(K.tensorflow_backend._get_available_gpus()) > 0:
-    print("Using GPU")
-    session_conf = tf.ConfigProto(intra_op_parallelism_threads=1,
-                                  inter_op_parallelism_threads=1,
-                                  )
-    sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-    K.set_session(sess)
+np.random.seed(0)
 ```
 
 Finally, we are ready to get clustering!
