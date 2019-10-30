@@ -94,11 +94,11 @@ print(harcluster.assess(y))
 
 Before viewing the results, lets talk about the metrics. The first metric is cluster accuracy, which we see here is 81.2%, which is absolutely state of the art for the HAR dataset. The next metric is NMI, which is another metric which describes cluster quality based on labels, independent of the number of clusters. We have an NMI of 0.717, which is again absolutely state of the art for this dataset. The last metric, ARI, shows another comparison between the actual groupings and our grouping. A value of 1 means the groupings are nearly the same, while a value of 0 means they completely disagree. We have a value of 0.64013, which indicates that are predictions are more or less in agreement with the truth, however they are not perfect.
 
-![N2D prediction](examples/viz/har-n2d-predicted.png)
+![N2D prediction](https://i.imgur.com/91iwVVj.png)
 
 N2D prediction
 
-![](examples/viz/har-n2d.png)
+![](https://i.imgur.com/8PTPTmE.png)
 Actual clusters
 
 ## Extending
