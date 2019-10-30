@@ -8,6 +8,14 @@ Not too deep clustering is a state of the art "deep" clustering technique, in wh
 
 In this repository, a framework for A) reproducing the study and B) extending the study is given, for further research and use in a variety of applications
 
+# Installation
+
+N2D is [available on pypi](https://pypi.org/project/n2d/)
+
+```sh
+pip install n2d
+```
+
 # Usage
 
 First, lets load in some data. In this example, we will use the Human Activity Recognition(HAR) dataset. In this dataset, sets of time series with data from mobile devices is used to classify what the person is doing (walking, sitting, etc.)

@@ -6,7 +6,7 @@ def readme():
 
 setuptools.setup(
     name = "n2d",
-    version = "0.0.1",
+    version = "0.0.2",
     description = "(Not too) deep clustering",
     long_description = readme(),
     long_description_content_type = "text/markdown",
@@ -29,7 +29,7 @@ setuptools.setup(
         'umap-learn',
         'tensorflow',
         'scipy',
-        'h5py',
+        'h5py >= 2.0.0',
         'matplotlib',
         'seaborn',
         'pandas',

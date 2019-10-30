@@ -15,6 +15,26 @@ let
       propogatedBuildInputs =  with pkgs.python37Packages;[numba];
     };
 
+#    n2d = pkgs.python37.pkgs.buildPythonPackage rec {
+#      pname = "n2d";
+#      version = "0.0.2";
+#      src = ./.;
+#      BuildInputs = [
+#        pkgs.python37Packages.h5py
+#        pkgs.python37Packages.Keras
+#        umap
+#        pkgs.python37Packages.numpy
+#        pkgs.python37Packages.scikitlearn
+#        pkgs.python37Packages.numba
+#        pkgs.python37Packages.scipy
+#        pkgs.python37Packages.pandas
+#        pkgs.python37Packages.seaborn
+#        pkgs.python37Packages.tensorflowWithCuda
+#        pkgs.python37Packages.matplotlib
+#      ];
+#      PropogatedBuildInputs = [pkgs.python37Packages.h5py pkgs.python37Packages.Keras];
+#    };
+
 in
   pkgs.mkShell {
     name = "simpleEnv";
@@ -37,8 +57,10 @@ in
       python37Packages.pillow
       python37Packages.matplotlib
       python37Packages.Keras
+      python37Packages.virtualenv
+      n2d
     ];
-   shellHook = ''
+    shellHook = ''
       '';
 
   }
