@@ -139,7 +139,7 @@ class UmapSpectral:
     # obviously if you change the clustering method or the manifold learner
     # youll want to change the predict method too.
         self.hle = self.manifoldInEmbedding.fit_transform(hl)
-        self.clusterManifold.fit(hle)
+        self.clusterManifold.fit(self.hle)
 	y_pred = self.clusterManifold.fit_predict(self.hle)
         return(y_pred)
 ```
