@@ -70,9 +70,12 @@ in
       python37Packages.matplotlib
       python37Packages.Keras
       python37Packages.virtualenv
+      python37Packages.twine
+      python37Packages.wheel
       n2d
     ];
     shellHook = ''
+      export SOURCE_DATE_EPOCH=$(date +%s) # 1980
       '';
 
   }
