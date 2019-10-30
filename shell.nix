@@ -1,20 +1,32 @@
 let
   pkgs = import <stable> {};
-  # bring in yellowbrick from pypi
-    umap = pkgs.python37.pkgs.buildPythonPackage rec {
-      pname = "umap-learn";
-      version = "0.3.10" ;
 
-      src = pkgs.python37.pkgs.fetchPypi {
-        inherit pname version;
-        sha256 = "02ada2yy6km6zgk2836kg1c97yrcpalvan34p8c57446finnpki1";
-      };
-      #doCheck = false;
-      checkInputs = with pkgs.python37Packages; [nose];
-      buildInputs = with pkgs.python37Packages; [numpy scipy scikitlearn numba] ;
-      propogatedBuildInputs =  with pkgs.python37Packages;[numba];
-    };
+  umap = pkgs.callPackage ./umap.nix {
+    buildPythonPackage = pkgs.python37.pkgs.buildPythonPackage;
+    fetchPypi = pkgs.python37.pkgs.fetchPypi;
+    pythonSource = pkgs.python37Packages;
+  };
 
+  n2d = pkgs.callPackage ./n2d.nix {
+    buildPythonPackage = pkgs.python37.pkgs.buildPythonPackage;
+    pythonSource = pkgs.python37Packages;
+    umapVar = umap;
+  };
+#  # bring in yellowbrick from pypi
+#    umap = pkgs.python37.pkgs.buildPythonPackage rec {
+#      pname = "umap-learn";
+#      version = "0.3.10" ;
+#
+#      src = pkgs.python37.pkgs.fetchPypi {
+#        inherit pname version;
+#        sha256 = "02ada2yy6km6zgk2836kg1c97yrcpalvan34p8c57446finnpki1";
+#      };
+#      #doCheck = false;
+#      checkInputs = with pkgs.python37Packages; [nose];
+#      buildInputs = with pkgs.python37Packages; [numpy scipy scikitlearn numba] ;
+#      propogatedBuildInputs =  with pkgs.python37Packages;[numba];
+#    };
+#
 #    n2d = pkgs.python37.pkgs.buildPythonPackage rec {
 #      pname = "n2d";
 #      version = "0.0.2";
