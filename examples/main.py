@@ -18,7 +18,6 @@ os.environ['PYTHONHASHSEED'] = '0'
 
 
 rn.seed(0)
-tf.set_random_seed(0)
 np.random.seed(0)
 
 if len(K.tensorflow_backend._get_available_gpus()) > 0:
