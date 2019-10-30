@@ -67,6 +67,6 @@ class UmapSpectral:
         y_pred = self.clusterManifold.fit_predict(self.hle)
         return(y_pred)
 
-manifoldSC = UmapSpectral(6)
-harcluster.predict(manifoldSC)
-print(harcluster.assess(y))
+# manifoldSC = UmapSpectral(6)
+# harcluster.predict(manifoldSC)
+# print(harcluster.assess(y))
