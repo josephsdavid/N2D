@@ -121,10 +121,9 @@ def plot(x, y, plot_id, names=None, save_dir = "viz", dataset = "fashion", n_clu
     if names is not None:
         viz_df['Label'] = viz_df['Label'].map(names)
     plt.subplots(figsize=(8, 5))
-    sns.scatterplot(x=0, y=1, hue='Label', legend='full', palette=sns.color_palette("hls", n_colors=n_clusters),
+    sns.scatterplot(x=0, y=1, hue='Label', legend='full', hue_order=sorted(viz_df['Label'].unique()), palette=sns.color_palette("hls", n_colors=n_clusters),
                     alpha=.5,
                     data=viz_df)
-    # Look into ordering and why its not consistent - should use debug mode..
     l = plt.legend(bbox_to_anchor=(-.1, 1.00, 1.1, .5), loc="lower left", markerfirst=True,
                    mode="expand", borderaxespad=0, ncol=n_clusters + 1, handletextpad=0.01, )
 
