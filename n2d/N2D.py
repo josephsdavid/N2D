@@ -84,11 +84,12 @@ class UmapGMM:
             covariance_type = 'full',
             n_components = nclust, random_state = random_state
         )
+        self.hle = None
 
     def predict(self, hl):
-        hle = self.manifoldInEmbedding.fit_transform(hl)
-        self.clusterManifold.fit(hle)
-        y_prob = self.clusterManifold.predict_proba(hle)
+        self.hle = self.manifoldInEmbedding.fit_transform(hl)
+        self.clusterManifold.fit(self.hle)
+        y_prob = self.clusterManifold.predict_proba(self.hle)
         y_pred = y_prob.argmax(1)
         return(np.asarray(y_pred))
 
@@ -148,6 +149,9 @@ class n2d:
         self.encoder = Model(inputs = self.autoencoder.Model.input, outputs = self.hidden)
         self.x = x
         self.nclust = nclust
+        self.preds = None
+        self.hle = None
+
 
 
     def preTrainEncoder(self,batch_size = 256, pretrain_epochs = 1000,
@@ -165,13 +169,9 @@ class n2d:
 
 
     def predict(self, manifoldLearner):
-
-
         hl = self.encoder.predict(self.x)
-        self.hle = hl
-
-        preds = manifoldLearner.predict(hl)
-        self.preds = preds
+        self.preds = manifoldLearner.predict(hl)
+        self.hle = manifoldLearner.hle
 
     def assess(self, y):
         y = np.asarray(y)
