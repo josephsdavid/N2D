@@ -16,19 +16,33 @@ from keras import backend as K
 
 
 
-x,y, y_names = data.load_har()
+x,y = data.load_pendigits()
 
-n_clusters = 6
-harcluster = n2d.n2d(x, nclust = n_clusters)
+n_clusters =10
+pencluster = n2d.n2d(x, nclust = n_clusters)
 
-harcluster.preTrainEncoder(weights = "har-1000-ae_weights.h5")
+pencluster.preTrainEncoder(weight_id="pendigits")
 
 manifoldGMM = n2d.UmapGMM(n_clusters)
 
-harcluster.predict(manifoldGMM)
+pencluster.predict(manifoldGMM)
 
-harcluster.visualize(y, y_names, dataset = "har", nclust = n_clusters)
-print(harcluster.assess(y))
+pencluster.visualize(y, names=None, dataset = "pendigits", nclust = n_clusters)
+print(pencluster.assess(y))
+
+#x,y, y_names = data.load_har()
+#
+#n_clusters = 6
+#harcluster = n2d.n2d(x, nclust = n_clusters)
+#
+#harcluster.preTrainEncoder(weights = "har-1000-ae_weights.h5")
+#
+#manifoldGMM = n2d.UmapGMM(n_clusters)
+#
+#harcluster.predict(manifoldGMM)
+#
+#harcluster.visualize(y, y_names, dataset = "har", nclust = n_clusters)
+#print(harcluster.assess(y))
 
 #f_x, f_y, f_names = data.load_fashion()
 #
