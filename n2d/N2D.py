@@ -5,8 +5,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-plt.style.use(['seaborn-white', 'seaborn-paper'])
-sns.set_context("paper", font_scale=1.3)
 import pandas as pd
 import numpy as np
 import sys
@@ -55,11 +53,11 @@ class AutoEncoder:
                 epochs = pretrain_epochs
             )
             # make this less stupid
-            self.Model.save_weights('weights/' + weightname + "-" +
+            self.Model.save_weights("weights/" + weightname + "-" +
                                     str(pretrain_epochs) +
                                     "-ae_weights.h5")
         else:
-            self.Model.load_weights('weights/' + weights)
+            self.Model.load_weights(weights)
 
 
 
@@ -115,7 +113,7 @@ def cluster_acc(y_true, y_pred):
     _, ind, w = best_cluster_fit(y_true, y_pred)
     return sum([w[i, j] for i, j in ind]) * 1.0 / y_pred.size
 
-def plot(x, y, plot_id, names=None, save_dir = "viz", dataset = "fashion", n_clusters = 10):
+def plot(x, y, plot_id, names=None,  dataset = "fashion", n_clusters = 10):
     viz_df = pd.DataFrame(data=x[:5000])
     viz_df['Label'] = y[:5000]
     if names is not None:
@@ -132,7 +130,7 @@ def plot(x, y, plot_id, names=None, save_dir = "viz", dataset = "fashion", n_clu
     plt.ylabel("")
     plt.xlabel("")
     plt.tight_layout()
-    plt.savefig(save_dir + '/' + dataset +
+    plt.savefig( 'viz/' + dataset +
                 '-' + plot_id + '.png', dpi=300)
     plt.clf()
 
@@ -179,6 +177,7 @@ class n2d:
         ari = np.round(metrics.adjusted_rand_score(y, self.preds), 5)
 
         return(acc, nmi, ari)
+
 
     def visualize(self, y, names, dataset = "Generic_Dataset", nclust = 10):
         y = np.asarray(y)

@@ -73,6 +73,7 @@ in
       python37Packages.twine
       python37Packages.wheel
       n2d
+      python37Packages.hdbscan
     ];
     shellHook = ''
       export SOURCE_DATE_EPOCH=$(date +%s) # 1980

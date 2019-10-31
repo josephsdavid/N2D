@@ -1,4 +1,5 @@
 import os
+import urllib3
 
 import numpy as np
 import pandas as pd
@@ -37,12 +38,12 @@ def load_fashion():
 
 def load_har():
     x_train = pd.read_csv(
-        'data/har/train/X_train.txt',
+        'https://raw.githubusercontent.com/josephsdavid/N2D-OOP/master/examples/data/har/train/X_train.txt',
         sep=r'\s+',
         header=None)
-    y_train = pd.read_csv('data/har/train/y_train.txt', header=None)
-    x_test = pd.read_csv('data/har/test/X_test.txt', sep=r'\s+', header=None)
-    y_test = pd.read_csv('data/har/test/y_test.txt', header=None)
+    y_train = pd.read_csv('https://raw.githubusercontent.com/josephsdavid/N2D-OOP/master/examples/data/har/train/y_train.txt', header=None)
+    x_test = pd.read_csv('https://raw.githubusercontent.com/josephsdavid/N2D-OOP/master/examples/data/har/test/X_test.txt', sep=r'\s+', header=None)
+    y_test = pd.read_csv('https://raw.githubusercontent.com/josephsdavid/N2D-OOP/master/examples/data/har/test/y_test.txt', header=None)
     x = np.concatenate((x_train, x_test))
     y = np.concatenate((y_train, y_test))
     # labels start at 1 so..
@@ -52,25 +53,35 @@ def load_har():
     return x, y, y_names
 
 
-def load_usps(data_path='data/usps'):
-    with open(data_path + '/usps_train.jf') as f:
-        data = f.readlines()
-    data = data[1:-1]
-    data = [list(map(float, line.split())) for line in data]
-    data = np.array(data)
-    data_train, labels_train = data[:, 1:], data[:, 0]
+def load_usps():
+    url1 ='https://raw.githubusercontent.com/josephsdavid/N2D-OOP/master/examples/data/usps/usps_train.jf'
+    https = urllib3.PoolManager(
+        cert_reqs = 'CERT_REQUIRED',
+        ca_certs = certifi.where()
+    )
+    response1 = https.request('GET', url)
+    print(response1.data)
 
-    with open(data_path + '/usps_test.jf') as f:
-        data = f.readlines()
-    data = data[1:-1]
-    data = [list(map(float, line.split())) for line in data]
-    data = np.array(data)
-    data_test, labels_test = data[:, 1:], data[:, 0]
+   # with urllib3.PoolManager.request(method = 'GET',url = 'https://raw.githubusercontent.com/josephsdavid/N2D-OOP/master/examples/data/usps/usps_train.jf').read as f:
+   #     data = f.readlines()
+   # data = data[1:-1]
+   # data = [list(map(float, line.split())) for line in data]
+   # data = np.array(data)
+   # data_train, labels_train = data[:, 1:], data[:, 0]
 
-    x = np.concatenate((data_train, data_test)).astype('float64')
-    y = np.concatenate((labels_train, labels_test))
-    print('USPS samples', x.shape)
-    return x, y
+   # with open('https://raw.githubusercontent.com/josephsdavid/N2D-OOP/master/examples/data/usps/usps_test.jf') as f:
+   #     data = f.readlines()
+   # data = data[1:-1]
+   # data = [list(map(float, line.split())) for line in data]
+   # data = np.array(data)
+   # data_test, labels_test = data[:, 1:], data[:, 0]
+
+   # x = np.concatenate((data_train, data_test)).astype('float64')
+   # y = np.concatenate((labels_train, labels_test))
+   # print('USPS samples', x.shape)
+   # return x, y
+
+load_usps()
 
 
 def load_pendigits(data_path='data/pendigits'):

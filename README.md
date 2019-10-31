@@ -21,7 +21,7 @@ pip install n2d
 First, lets load in some data. In this example, we will use the Human Activity Recognition(HAR) dataset. In this dataset, sets of time series with data from mobile devices is used to classify what the person is doing (walking, sitting, etc.)
 
 ```python
-import datasets as data
+from n2d import datasets as data
 x,y, y_names = data.load_har()
 ```
 
@@ -159,6 +159,8 @@ This clearly did not go as well, however we can see that it is very easy to exte
 # Roadmap
 
 - [x] Package library
+- [ ] Package data
+- [ ] Make autoencoder interchangeable just like the rest
 - [ ] Manage file saving paths better
 - [ ] Implement other promising methods
 - [ ] Make assessment/visualization more extensible
