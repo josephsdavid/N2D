@@ -159,7 +159,7 @@ This clearly did not go as well, however we can see that it is very easy to exte
 # Roadmap
 
 - [x] Package library
-- [ ] Package data
+- [x] Package data
 - [ ] Make autoencoder interchangeable just like the rest
 - [ ] Manage file saving paths better
 - [ ] Implement other promising methods
