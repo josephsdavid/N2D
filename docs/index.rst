@@ -10,6 +10,8 @@ Welcome to n2d's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   About
+
 
 
 Indices and tables
