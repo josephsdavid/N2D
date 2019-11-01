@@ -74,6 +74,9 @@ in
       python37Packages.wheel
       n2d
       python37Packages.hdbscan
+      python37Packages.sphinx
+      python37Packages.recommonmark
+      python37Packages.sphinx_rtd_theme
     ];
     shellHook = ''
       export SOURCE_DATE_EPOCH=$(date +%s) # 1980
