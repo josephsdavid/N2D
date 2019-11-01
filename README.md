@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/n2d/badge/?version=latest)](https://n2d.readthedocs.io/en/latest/?badge=latest)
+
 # Not Too Deep Clustering
 
 This is a library implementation of [n2d](https://github.com/rymc/n2d). To learn more about N2D, and clustering manifolds of autoencoded embeddings, please refer to the [amazing paper](https://arxiv.org/abs/1908.05968) published August 2019.
@@ -7,6 +9,10 @@ This is a library implementation of [n2d](https://github.com/rymc/n2d). To learn
 Not too deep clustering is a state of the art "deep" clustering technique, in which first, the data is embedded using an autoencoder. Then, instead of clustering that using some deep clustering network, we use a manifold learner to find the underlying (local) manifold in the embedding. Then, we cluster that manifold. In the paper, this was shown to produce high quality clusters without the standard extreme feature engineering required for clustering.
 
 In this repository, a framework for A) reproducing the study and B) extending the study is given, for further research and use in a variety of applications
+
+# Documentation
+
+Full documentation is available on [read the docs](https://n2d.readthedocs.io/en/latest/)
 
 # Installation
 
