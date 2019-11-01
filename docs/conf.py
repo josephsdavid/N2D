@@ -40,7 +40,6 @@ release = '0.0.5'
 # ones.
 import sphinx_rtd_theme
 extensions = [
-    'recommonmark'
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx_rtd_theme'
