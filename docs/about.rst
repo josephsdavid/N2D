@@ -1,7 +1,7 @@
 About N2D
 =========
 
-**N2D** is a python library implementation of the "deep" clustering method described in this `brilliant paper <https://arxiv.org/abs/1908.05968v5>`_. All source code is more or less based on the original author's code in `their original github repository <https://github.com/rymc/n2d>`_.
+**N2D** is a python library implementation of the "deep" clustering method described in this `brilliant paper <https://arxiv.org/abs/1908.05968v5>`_. Source code is inspired by the original author's code in `their github repository <https://github.com/rymc/n2d>`_.
 
 In this section we will talk about the motivations for N2D, what it is, and the goals for this package.
 
@@ -11,7 +11,7 @@ What is N2D?
 
 N2D is short for "Not too deep" clustering. A "not too deep" clustering algorithm works as follows:
 
-1. The data goes into an autoencoder, which is trained, learning a powerful, concise representation (embedding) of the data.
+1. The data goes into an autoencoder (or other representation learning neural network), which is trained, learning a powerful, concise representation (embedding) of the data.
 
 2. The autoencoded embedding then goes into a manifold learner, in this case primarily UMAP (while t-sne and ISOMAP are also usable), which finds a *local manifold* within the data
 

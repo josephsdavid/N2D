@@ -160,7 +160,9 @@ This clearly did not go as well, however we can see that it is very easy to exte
 
 - [x] Package library
 - [x] Package data
+- [ ] Implement data augmentation techniques for images, sequences, and time series
 - [ ] Make autoencoder interchangeable just like the rest
+- [ ] Implement other types of autoencoders as well as convolutional layers
 - [ ] Manage file saving paths better
 - [ ] Implement other promising methods
 - [ ] Make assessment/visualization more extensible

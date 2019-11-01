@@ -11,6 +11,7 @@ Welcome to n2d's documentation!
    :caption: Contents:
 
    about
+   quickstart
 
 
 
