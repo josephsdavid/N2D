@@ -31,6 +31,7 @@ N2D comes with **5** built in datasets: 3 image datasets and two time series dat
   - **Description**: Pressure sensor data of humans writing. Used to determine what number the human is writing. 10 classes
 
 To actually load the data, we import the datasets from n2d, shown below along with the data import functions and their outputs: ::
+
        from n2d import datasets as data
 
        # imports mnist
