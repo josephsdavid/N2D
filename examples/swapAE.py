@@ -42,7 +42,7 @@ class denoisingAutoEncoder:
         # denoising mechanism from lovely keras blog post:
         # https://blog.keras.io/building-autoencoders-in-keras.html
         x_clean = x
-        x_noisy = x_clean + self.noise_factor + np.random.normal(loc = 0.0, scale = 1.0, size = x_clean.shape)
+        x_noisy = x_clean + self.noise_factor * np.random.normal(loc = 0.0, scale = 1.0, size = x_clean.shape)
         x_noisy = np.clip(x_noisy, 0., 1.)
 
         return x_clean, x_noisy
