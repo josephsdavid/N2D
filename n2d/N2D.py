@@ -136,11 +136,15 @@ def plot(x, y, plot_id, names=None,  dataset = "fashion", n_clusters = 10):
 
 class n2d:
     def __init__(self,
-                 x, nclust = 10, act = 'relu'
+                 x,
+                 autoencoder = AutoEncoder,
+                 architecture = [500,500,2000],
+                 nclust = 10,
+                 ae_args = {"act":"relu"}
                  ):
+        shape = [x.shape[-1]] + architecture + [nclust]
 
-        shape = [x.shape[-1], 500, 500, 2000, nclust]
-        self.autoencoder = AutoEncoder(shape, act)
+        self.autoencoder = autoencoder(shape, **ae_args)
 
         self.hidden = self.autoencoder.Model.get_layer(name='encoder_%d' % (len(shape) - 2)).output
         self.encoder = Model(inputs = self.autoencoder.Model.input, outputs = self.hidden)

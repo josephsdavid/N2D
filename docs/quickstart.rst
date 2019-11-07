@@ -30,7 +30,7 @@ N2D comes with **5** built in datasets: 3 image datasets and two time series dat
 * Pendigits
   - **Description**: Pressure sensor data of humans writing. Used to determine what number the human is writing. 10 classes
 
-To actually load the data, we import the datasets from n2d, shown below along with the data import functions and their outputs: ::
+To actually load the data, we import the datasets from n2d, shown below along with the data import functions and their outputs ::
 
        from n2d import datasets as data
 
@@ -51,7 +51,8 @@ To actually load the data, we import the datasets from n2d, shown below along wi
 
 
 
-In this example, we are going to use the most difficult dataset: fashion ::
+In this example, we are going to use the most difficult dataset, fashion ::
+
         x, y, y_names = data.load_fashion
 
 

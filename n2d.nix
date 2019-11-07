@@ -2,7 +2,7 @@
 
     buildPythonPackage rec {
       pname = "n2d";
-      version = "0.0.2";
+      version = "0.1.2";
     
 
       src = ./.;

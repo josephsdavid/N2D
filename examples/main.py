@@ -3,7 +3,6 @@ import n2d
 from n2d import datasets as data
 import random as rn
 import numpy as np
-
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -18,8 +17,8 @@ from keras import backend as K
 
 x,y = data.load_pendigits()
 
-n_clusters =10
-pencluster = n2d.n2d(x, nclust = n_clusters)
+n_clusters = 10
+pencluster = n2d.n2d(x, nclust = n_clusters, ae_args = {"act":"relu"})
 
 pencluster.preTrainEncoder(weight_id="pendigits")
 

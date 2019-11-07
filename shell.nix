@@ -65,6 +65,7 @@ in
 #      python37Packages.torchvision
       python37Packages.tensorflowWithCuda
       python37Packages.tensorflow-tensorboard
+      python37Packages.tensorflow-probability
       umap
       python37Packages.pillow
       python37Packages.matplotlib
@@ -77,6 +78,7 @@ in
       python37Packages.sphinx
       python37Packages.recommonmark
       python37Packages.sphinx_rtd_theme
+      python37Packages.ipython
     ];
     shellHook = ''
       export SOURCE_DATE_EPOCH=$(date +%s) # 1980
