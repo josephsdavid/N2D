@@ -227,7 +227,7 @@ class denoisingAutoEncoder:
                 batch_size = batch_size,
                 epochs = pretrain_epochs
             )
-            # make this less stupid
+
             self.Model.save_weights("weights/" + weightname + "-" +
                                     str(pretrain_epochs) +
                                     "-ae_weights.h5")

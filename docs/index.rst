@@ -12,6 +12,7 @@ Welcome to n2d's documentation!
 
    about
    quickstart
+   extending
 
 
 

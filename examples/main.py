@@ -1,8 +1,5 @@
-import os
 import n2d
 from n2d import datasets as data
-import random as rn
-import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -10,38 +7,34 @@ plt.style.use(['seaborn-white', 'seaborn-paper'])
 sns.set_context("paper", font_scale=1.3)
 matplotlib.use('agg')
 
-import tensorflow as tf
-from keras import backend as K
 
+#x,y = data.load_pendigits()
+#
+#n_clusters = 10
+#pencluster = n2d.n2d(x, nclust = n_clusters, ae_args = {"act":"relu"})
+#
+#pencluster.preTrainEncoder(weight_id="pendigits")
+#
+#manifoldGMM = n2d.UmapGMM(n_clusters, umapdim=n_clusters)
+#
+#pencluster.predict(manifoldGMM)
+#
+##pencluster.visualize(y, names=None, dataset = "pendigits", nclust = n_clusters)
+#print(pencluster.assess(y))
 
+x,y, y_names = data.load_har()
 
-x,y = data.load_pendigits()
+n_clusters = 6
+harcluster = n2d.n2d(x, nclust = n_clusters)
 
-n_clusters = 10
-pencluster = n2d.n2d(x, nclust = n_clusters, ae_args = {"act":"relu"})
-
-pencluster.preTrainEncoder(weight_id="pendigits")
+harcluster.preTrainEncoder(weights = "weights/har-1000-ae_weights.h5")
 
 manifoldGMM = n2d.UmapGMM(n_clusters)
 
-pencluster.predict(manifoldGMM)
+harcluster.predict(manifoldGMM)
 
-pencluster.visualize(y, names=None, dataset = "pendigits", nclust = n_clusters)
-print(pencluster.assess(y))
-
-#x,y, y_names = data.load_har()
-#
-#n_clusters = 6
-#harcluster = n2d.n2d(x, nclust = n_clusters)
-#
-#harcluster.preTrainEncoder(weights = "har-1000-ae_weights.h5")
-#
-#manifoldGMM = n2d.UmapGMM(n_clusters)
-#
-#harcluster.predict(manifoldGMM)
-#
-#harcluster.visualize(y, y_names, dataset = "har", nclust = n_clusters)
-#print(harcluster.assess(y))
+harcluster.visualize(y, y_names, dataset = "har", nclust = n_clusters)
+print(harcluster.assess(y))
 
 #f_x, f_y, f_names = data.load_fashion()
 #
