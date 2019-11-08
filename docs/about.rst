@@ -1,7 +1,7 @@
 About N2D
 =========
 
-**N2D** is a python library implementation of the "deep" clustering method described in this `brilliant paper <https://arxiv.org/abs/1908.05968v5>`_.
+**N2D** is a python library implementation of the "deep" clustering method described in this `brilliant paper <https://arxiv.org/abs/1908.05968v5>`_. The source code for the software is available `here <https://github.com/josephsdavid/N2D>`.
 
 In this section we will talk about the motivations for N2D, what it is, and the goals for this package.
 
