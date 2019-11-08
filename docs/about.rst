@@ -34,6 +34,7 @@ Citation
 --------------
 
 Please cite the original authors of the algorithm if you use N2D in your research. ::
+
         @article{2019arXiv190805968M,
         title = {N2D:(Not Too) Deep Clustering via Clustering the Local Manifold of an Autoencoded Embedding},
         author = {{McConville}, Ryan and {Santos-Rodriguez}, Raul and {Piechocki}, Robert J and {Craddock}, Ian},
