@@ -265,6 +265,8 @@ This will design the networks to be [input dimensions, 500, 500, 2000, output di
 
 - [x] Package library
 - [x] Package data
+- [ ] Compatability with sklearn (in progress)
+- [ ] Early stopping (in progress)
 - [ ] Implement data augmentation techniques for images, sequences, and time series
 - [x] Make autoencoder interchangeable just like the rest
 - [ ] Implement other types of autoencoders as well as convolutional layers
