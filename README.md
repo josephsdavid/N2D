@@ -2,6 +2,12 @@
 
 Welcome to the sklearn compatability branch of N2D!! This is an extreme WIP!! 
 
+# Changes
+
+sklearn fit and predict functionality! Weights no longer saved in a forced directory! Visualizations no longer saved in a forced directory!
+
+TODO: Update readme, documentation, examples!!
+
 # Not Too Deep Clustering
 
 This is a library implementation of [n2d](https://github.com/rymc/n2d). To learn more about N2D, and clustering manifolds of autoencoded embeddings, please refer to the [amazing paper](https://arxiv.org/abs/1908.05968) published August 2019.

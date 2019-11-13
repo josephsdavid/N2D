@@ -9,6 +9,9 @@ import pandas as pd
 import numpy as np
 import sys
 import tensorflow as tf
+
+from . import linear_assignment as la
+
 import umap
 from keras import backend as K
 from keras.layers import Dense, Input
@@ -18,11 +21,8 @@ from sklearn import mixture
 from sklearn.cluster import KMeans, SpectralClustering
 from sklearn.manifold import Isomap
 from sklearn.manifold import LocallyLinearEmbedding
-from sklearn.utils.linear_assignment_ import linear_assignment
 
 import pandas as pd
-from keras.datasets import fashion_mnist
-
 
 class AutoEncoder:
     def __init__(self, dims, act = 'relu'):
@@ -40,7 +40,7 @@ class AutoEncoder:
 
         self.Model = Model(inputs = self.x, outputs = self.h)
 
-    def pretrain(self, dataset, batch_size = 256, pretrain_epochs = 1000,
+    def fit(self, dataset, batch_size = 256, pretrain_epochs = 1000,
                      loss = 'mse', optimizer = 'adam',weights = None,
                      verbose = 0, weightname = 'fashion'):
         if weights == None:
@@ -53,9 +53,7 @@ class AutoEncoder:
                 epochs = pretrain_epochs
             )
             # make this less stupid
-            self.Model.save_weights("weights/" + weightname + "-" +
-                                    str(pretrain_epochs) +
-                                    "-ae_weights.h5")
+            self.Model.save_weights(weightname)
         else:
             self.Model.load_weights(weights)
 
@@ -84,9 +82,11 @@ class UmapGMM:
         )
         self.hle = None
 
-    def predict(self, hl):
+    def fit(self, hl):
         self.hle = self.manifoldInEmbedding.fit_transform(hl)
         self.clusterManifold.fit(self.hle)
+
+    def predict(self):
         y_prob = self.clusterManifold.predict_proba(self.hle)
         y_pred = y_prob.argmax(1)
         return(np.asarray(y_pred))
@@ -101,7 +101,7 @@ def best_cluster_fit(y_true, y_pred):
     for i in range(y_pred.size):
         w[y_pred[i], y_true[i]] += 1
 
-    ind = linear_assignment(w.max() - w)
+    ind = la.linear_assignment(w.max() - w)
     best_fit = []
     for i in range(y_pred.size):
         for j in range(len(ind)):
@@ -113,7 +113,7 @@ def cluster_acc(y_true, y_pred):
     _, ind, w = best_cluster_fit(y_true, y_pred)
     return sum([w[i, j] for i, j in ind]) * 1.0 / y_pred.size
 
-def plot(x, y, plot_id, names=None,  dataset = "fashion", n_clusters = 10):
+def plot(x, y, plot_id, names=None,  savepath = "Generic_figure", n_clusters = 10):
     viz_df = pd.DataFrame(data=x[:5000])
     viz_df['Label'] = y[:5000]
     if names is not None:
@@ -130,49 +130,49 @@ def plot(x, y, plot_id, names=None,  dataset = "fashion", n_clusters = 10):
     plt.ylabel("")
     plt.xlabel("")
     plt.tight_layout()
-    plt.savefig( 'viz/' + dataset +
+    plt.savefig( savepath +
                 '-' + plot_id + '.png', dpi=300)
     plt.clf()
 
 class n2d:
     def __init__(self,
                  x,
+                 manifoldLearner,
                  autoencoder = AutoEncoder,
                  architecture = [500,500,2000],
-                 nclust = 10,
-                 ae_args = {"act":"relu"}
+                 ndim = 10,
+                 ae_args = {"act":"relu"},
                  ):
-        shape = [x.shape[-1]] + architecture + [nclust]
+        shape = [x.shape[-1]] + architecture + [ndim]
 
         self.autoencoder = autoencoder(shape, **ae_args)
-
+        self.manifoldLearner = manifoldLearner
         self.hidden = self.autoencoder.Model.get_layer(name='encoder_%d' % (len(shape) - 2)).output
         self.encoder = Model(inputs = self.autoencoder.Model.input, outputs = self.hidden)
         self.x = x
-        self.nclust = nclust
+        self.ndim = ndim
         self.preds = None
         self.hle = None
 
 
 
-    def preTrainEncoder(self,batch_size = 256, pretrain_epochs = 1000,
+    def fit(self,batch_size = 256, pretrain_epochs = 1000,
                      loss = 'mse', optimizer = 'adam',weights = None,
                      verbose = 0, weight_id = 'generic_autoencoder'):
 
-        self.autoencoder.pretrain(dataset = self.x,
+        self.autoencoder.fit(dataset = self.x,
                                   batch_size = batch_size,
                                   pretrain_epochs = pretrain_epochs,
                                   loss = loss,
                                   optimizer =optimizer, weights = weights,
                                   verbose = verbose, weightname = weight_id)
-
-
-
-
-    def predict(self, manifoldLearner):
         hl = self.encoder.predict(self.x)
-        self.preds = manifoldLearner.predict(hl)
-        self.hle = manifoldLearner.hle
+        self.manifoldLearner.fit(hl)
+
+
+    def predict(self):
+        self.preds = self.manifoldLearner.predict()
+        self.hle = self.manifoldLearner.hle
 
     def assess(self, y):
         y = np.asarray(y)
@@ -183,43 +183,10 @@ class n2d:
         return(acc, nmi, ari)
 
 
-    def visualize(self, y, names, dataset = "Generic_Dataset", nclust = 10):
+    def visualize(self, y, names, savePath = "Generic_Dataset", nclust = 10):
         y = np.asarray(y)
         y_pred = np.asarray(self.preds)
         hle = self.hle
-        plot(hle, y, 'n2d', names, dataset = dataset, n_clusters = nclust)
+        plot(hle, y, 'n2d', names, savepath = savePath, n_clusters = nclust)
         y_pred_viz, _, _ = best_cluster_fit(y, y_pred)
-        plot(hle, y_pred_viz, 'n2d-predicted', names, dataset = dataset, n_clusters = nclust)
-#x, y, y_names =  load_fashion()
-
-
-
-
-#os.environ['PYTHONHASHSEED'] = '0'
-#
-#
-#rn.seed(0)
-#tf.set_random_seed(0)
-#np.random.seed(0)
-#
-#if len(K.tensorflow_backend._get_available_gpus()) > 0:
-#    print("Using GPU")
-#    session_conf = tf.ConfigProto(intra_op_parallelism_threads=1,
-#                                  inter_op_parallelism_threads=1,
-#                                  )
-#    sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-#    K.set_session(sess)
-#
-#
-#
-#x,y, y_names = nd.load_har()
-#
-#
-#harcluster = nd.n2d(x, nclust = 6)
-#
-#harcluster.preTrainEncoder(weights = "har-1000-ae_weights.h5")
-#
-#harcluster.run()
-#
-#harcluster.visualize(y, y_names, dataset = "har", n_clusters = 6)
-#print(harcluster.assess(y))
+        plot(hle, y_pred_viz, 'n2d-predicted', names, savepath = savePath, n_clusters = nclust)

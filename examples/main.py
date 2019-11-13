@@ -25,15 +25,15 @@ matplotlib.use('agg')
 x,y, y_names = data.load_har()
 
 n_clusters = 6
-harcluster = n2d.n2d(x, nclust = n_clusters)
-
-harcluster.preTrainEncoder(weights = "weights/har-1000-ae_weights.h5")
-
 manifoldGMM = n2d.UmapGMM(n_clusters)
+harcluster = n2d.n2d(x,manifoldGMM, ndim = n_clusters)
 
-harcluster.predict(manifoldGMM)
+harcluster.fit(weights = "weights/har-1000-ae_weights.h5")
 
-harcluster.visualize(y, y_names, dataset = "har", nclust = n_clusters)
+
+harcluster.predict()
+
+harcluster.visualize(y, y_names, savePath = "viz/har", nclust = n_clusters)
 print(harcluster.assess(y))
 
 #f_x, f_y, f_names = data.load_fashion()
