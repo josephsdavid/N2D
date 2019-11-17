@@ -151,7 +151,7 @@ class n2d:
                                        architecture = architecture,
                                        **ae_args)
         self.manifoldLearner = manifoldLearner
-        self.hidden = self.autoencoder.Model.get_layer(name='encoder_%d' % (len(shape) - 2)).output
+        self.hidden = self.autoencoder.Model.get_layer(name='encoder_%d' % (len(self.autoencoder.dims) - 2)).output
         self.encoder = Model(inputs = self.autoencoder.Model.input, outputs = self.hidden)
         self.x = x
         self.ndim = ndim

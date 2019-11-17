@@ -7,6 +7,12 @@ let
     pythonSource = pkgs.python37Packages;
   };
 
+  datareader = pkgs.callPackage ./datareader.nix {
+    buildPythonPackage = pkgs.python37.pkgs.buildPythonPackage;
+    fetchPypi = pkgs.python37.pkgs.fetchPypi;
+    pythonSource = pkgs.python37Packages;
+  };
+
   n2d = pkgs.callPackage ./n2d.nix {
     buildPythonPackage = pkgs.python37.pkgs.buildPythonPackage;
     pythonSource = pkgs.python37Packages;
@@ -79,6 +85,7 @@ in
       python37Packages.recommonmark
       python37Packages.sphinx_rtd_theme
       python37Packages.ipython
+      datareader
     ];
     shellHook = ''
       export SOURCE_DATE_EPOCH=$(date +%s) # 1980
