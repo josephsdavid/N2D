@@ -36,6 +36,40 @@ harcluster.predict()
 harcluster.visualize(y, y_names, savePath = "viz/har", nclust = n_clusters)
 print(harcluster.assess(y))
 
+
+from sklearn.cluster import SpectralClustering
+import umap
+class UmapSpectral:
+    def __init__(self, nclust,
+                 umapdim = 2,
+                 umapN = 10,
+                 umapMd = float(0),
+                 umapMetric = 'euclidean', random_state = 0
+                 ):
+        self.nclust = nclust
+	# change this bit for changing the manifold learner
+        self.manifoldInEmbedding = umap.UMAP(
+            random_state = random_state,
+            metric = umapMetric,
+            n_components = umapdim,
+            n_neighbors = umapN,
+            min_dist = umapMd
+        )
+	# change this bit to change the clustering mechanism
+        self.clusterManifold = SpectralClustering(n_clusters = nclust, affinity = 'nearest_neighbors',random_state = random_state)
+
+        self.hle = None
+
+    def fit(self, hl):
+        self.hle = self.manifoldInEmbedding.fit_transform(hl)
+        self.clusterManifold.fit(self.hle)
+
+    def predict(self):
+    # obviously if you change the clustering method or the manifold learner
+    # youll want to change the predict method too.
+        y_pred = self.clusterManifold.fit_predict(self.hle)
+        return(y_pred)
+
 #f_x, f_y, f_names = data.load_fashion()
 #
 #n_cl_fashion = 10
@@ -49,6 +83,14 @@ print(harcluster.assess(y))
 #fashioncl.visualize(f_y, f_names, dataset = "fashion", nclust = n_cl_fashion)
 #print(fashioncl.assess(f_y))
 
+
+
+manifoldSC = UmapSpectral(n_clusters)
+SCclust = n2d.n2d(x, manifoldSC, ndim = n_clusters)
+# weights from the examples folder
+SCclust.fit(weights = "weights/har-1000-ae_weights.h5")
+SCclust.predict()
+print(SCclust.assess(y))
 
 #m_x, m_y = data.load_mnist()
 #

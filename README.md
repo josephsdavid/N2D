@@ -1,12 +1,10 @@
 [![Documentation Status](https://readthedocs.org/projects/n2d/badge/?version=latest)](https://n2d.readthedocs.io/en/latest/?badge=latest)
 
-Welcome to the sklearn compatability branch of N2D!! This is an extreme WIP!! 
 
 # Changes
 
-sklearn fit and predict functionality! Weights no longer saved in a forced directory! Visualizations no longer saved in a forced directory!
+Sklearn-like API. Please note this is a major update, and if you are using a previous version you will have to change your code, as the API has changed!
 
-TODO: Update readme, documentation, examples!!
 
 # Not Too Deep Clustering
 
@@ -67,39 +65,38 @@ np.random.seed(0)
 
 Finally, we are ready to get clustering!
 
+First, we need to define the manifold learning and clustering algorithm which we will use to cluster the autoencoded embedding. In general, it is best to use UmapGMM, which in the paper gave the absolute best performance.
+
 ```python
 import n2d as nd
 
 n_clusters = 6  #there are 6 classes in HAR
 
-# Initialize everything
-harcluster = nd.n2d(x, nclust = n_clusters)
+manifoldGMM = n2d.UmapGMM(n_clusters)
 ```
 
-The first step in using this framework is to initialize an n2d object with the dataset and the number of clusters. The primary purpose of this step is to set up the autoencoder for training.
-
-Next, we pretrain the autoencoder. In this step, you can fiddle with batch size etc. On the first run of the autoencoder, we want to include the weight_id parameter, which saves the weights in `weights/`, so we do not have to train the autoencoder repeatedly during our experiments.
+The next step in this framework is to initialize the n2d object, which builds an autoencoder network and gets everything ready for clustering:
 
 ```python
-harcluster.preTrainEncoder(weight_id = "har")
+harcluster = n2d.n2d(x,manifoldGMM, ndim = n_clusters)
+```
+
+Next, we fit the data. In this step, the autoencoder is trained on the data, setting up weights.
+
+```python
+harcluster.fit(weight_id = "har")
 ```
 
 The next time we want to use this autoencoder, we will instead use the weights argument:
 
 ```python
-harcluster.preTrainEncoder(weights = "har-1000-ae_weights.h5")
+harcluster.fit(weights = "har-1000-ae_weights.h5")
 ```
 
-The next important step is to define the manifold clustering method to be used:
+Now we can make a prediction, as well as visualize and assess. In this step, the manifold learner learns the manifold for the data, which is then clustered. By default, it makes the prediction on the data stored internally, however you can specify a new `x` in order to make predictions on new data.
 
 ```python
-manifoldGMM = nd.UmapGMM(n_clusters)
-```
-
-Now we can make a prediction, as well as visualize and assess
-
-```python
-harcluster.predict(manifoldGMM)
+harcluster.predict()
 # predictions are stored in harcluster.preds
 harcluster.visualize(y, y_names, dataset = "har", nclust = n_clusters)
 print(harcluster.assess(y))
@@ -143,7 +140,7 @@ class UmapSpectral:
         )
 	# change this bit to change the clustering mechanism
 	self.clusterManifold = SpectralClustering(
-		n_clusters = nclust
+		n_clusters = nclust,
 		affinity = 'nearest_neighbors',
 		random_state = random_state
 	)
@@ -151,11 +148,13 @@ class UmapSpectral:
 	self.hle = None
 
 
-    def predict(self, hl):
-    # obviously if you change the clustering method or the manifold learner
-    # youll want to change the predict method too.
+    def fit(self, hl):
         self.hle = self.manifoldInEmbedding.fit_transform(hl)
         self.clusterManifold.fit(self.hle)
+
+    def predict(self):
+    # obviously if you change the clustering method or the manifold learner
+    # youll want to change the predict method too.
 	y_pred = self.clusterManifold.fit_predict(self.hle)
         return(y_pred)
 ```
@@ -164,8 +163,11 @@ Now we can run and assess our new clustering method:
 
 ```python
 manifoldSC = UmapSpectral(6)
-harcluster.predict(manifoldSC)
-print(harcluster.assess(y))
+SCclust = n2d.n2d(x, manifoldSC, ndim = n_clusters)
+# weights from the examples folder
+SCclust.fit(weights = "weights/har-1000-ae_weights.h5")
+SCclust.predict()
+print(SCclust.assess(y))
 # (0.40946, 0.42137, 0.14973)
 ```
 
@@ -176,7 +178,6 @@ This clearly did not go as well, however we can see that it is very easy to exte
 We can also replace the embedding learner, by writing a new class. In this example we will implement a denoising autoencoder, as demonstrated in [this awesome blog post](https://blog.keras.io/building-autoencoders-in-keras.html)
 
 ```python
-
 import os
 import n2d
 from n2d import datasets as data
@@ -198,9 +199,11 @@ x,y, y_names = data.load_fashion()
 
 
 class denoisingAutoEncoder:
-    def __init__(self, dims, noise_factor = 0.5, act = 'relu'):
-        self.noise_factor = noise_factor
+    def __init__(self, data, ndim, architecture, 
+    noise_factor = 0.5, act = 'relu'):
+        dims = [data.shape[-1]] + architecture + [ndim]
         self.dims = dims
+        self.noise_factor = noise_factor
         self.act = act
         self.x = Input(shape = (dims[0],), name = 'input')
         self.h = self.x
@@ -222,7 +225,7 @@ class denoisingAutoEncoder:
 
         return x_clean, x_noisy
 
-    def pretrain(self, dataset, batch_size = 256, pretrain_epochs = 1000,
+    def fit(self, dataset, batch_size = 256, pretrain_epochs = 1000,
                      loss = 'mse', optimizer = 'adam',weights = None,
                      verbose = 0, weightname = 'fashion'):
         if weights == None:
@@ -245,16 +248,15 @@ class denoisingAutoEncoder:
 
 n_clusters = 10
 
-model = n2d.n2d(x, autoencoder = denoisingAutoEncoder, nclust = n_clusters, ae_args={'noise_factor': 0.5})
+model = n2d.n2d(x, manifoldLearner=n2d.UmapGMM(n_clusters),
+	autoencoder = denoisingAutoEncoder, 
+	ndim = n_clusters, ae_args={'noise_factor': 0.5})
 
-model.preTrainEncoder(weight_id="fashion_denoise")
+model.fit(weight_id="fashion_denoise")
 
+model.predict()
 
-manifoldGMM = n2d.UmapGMM(n_clusters)
-
-model.predict(manifoldGMM)
-
-model.visualize(y, names=None, dataset = "fashion_denoise", nclust = n_clusters)
+model.visualize(y, y_names, savePath = "viz/fashion_denoise", nclust = n_clusters)
 print(model.assess(y))
 ```
 
@@ -266,7 +268,7 @@ The class needs to take in a list of dimensions for the model. These dimensions 
 n2d.n2d(..., architecture = [500,500,2000])
 ```
 
-This will design the networks to be [input dimensions, 500, 500, 2000, output dimensions]. If we want to change the autoencoder itself, we need to write a class which accepts the shape, and then some other (preferably with defaults) arguments. This class NEEDS to have a method called pretrain. Everything else is up to you! To add in extra arguments to whatever your new autoencoder is, you pass them in through a dict called ae_args, as seen in the above example.
+This will design the networks to be [input dimensions, 500, 500, 2000, output dimensions], as seen in the denoisingAutoencoder class. If we want to change the autoencoder itself, we need to write a class which accepts the shape, and then some other (preferably with defaults) arguments. This class NEEDS to have a method called fit. Everything else is up to you! To add in extra arguments to whatever your new autoencoder is, you pass them in through a dict called ae_args, as seen in the above example.
 
 
 # Roadmap

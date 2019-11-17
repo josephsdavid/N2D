@@ -22,9 +22,11 @@ x,y, y_names = data.load_fashion()
 
 
 class denoisingAutoEncoder:
-    def __init__(self, dims, noise_factor = 0.5, act = 'relu'):
-        self.noise_factor = noise_factor
+    def __init__(self, data, ndim, architecture,
+    noise_factor = 0.5, act = 'relu'):
+        dims = [data.shape[-1]] + architecture + [ndim]
         self.dims = dims
+        self.noise_factor = noise_factor
         self.act = act
         self.x = Input(shape = (dims[0],), name = 'input')
         self.h = self.x
@@ -39,15 +41,14 @@ class denoisingAutoEncoder:
         self.Model = Model(inputs = self.x, outputs = self.h)
 
     def add_noise(self, x):
-        # denoising mechanism from lovely keras blog post:
-        # https://blog.keras.io/building-autoencoders-in-keras.html
+    	# this is the new bit
         x_clean = x
         x_noisy = x_clean + self.noise_factor * np.random.normal(loc = 0.0, scale = 1.0, size = x_clean.shape)
         x_noisy = np.clip(x_noisy, 0., 1.)
 
         return x_clean, x_noisy
 
-    def pretrain(self, dataset, batch_size = 256, pretrain_epochs = 1000,
+    def fit(self, dataset, batch_size = 256, pretrain_epochs = 1000,
                      loss = 'mse', optimizer = 'adam',weights = None,
                      verbose = 0, weightname = 'fashion'):
         if weights == None:
@@ -60,7 +61,7 @@ class denoisingAutoEncoder:
                 batch_size = batch_size,
                 epochs = pretrain_epochs
             )
-            # make this less stupid
+
             self.Model.save_weights("weights/" + weightname + "-" +
                                     str(pretrain_epochs) +
                                     "-ae_weights.h5")
@@ -68,16 +69,14 @@ class denoisingAutoEncoder:
             self.Model.load_weights(weights)
 
 
+
 n_clusters = 10
 
-model = n2d.n2d(x, autoencoder = denoisingAutoEncoder, nclust = n_clusters, ae_args={'noise_factor': 0.5})
+model = n2d.n2d(x, manifoldLearner=n2d.UmapGMM(n_clusters),autoencoder = denoisingAutoEncoder, ndim = n_clusters, ae_args={'noise_factor': 0.5})
 
-model.preTrainEncoder(weight_id="fashion_denoise")
+model.fit(weights="weights/fashion_denoise-1000-ae_weights.h5")
 
+model.predict()
 
-manifoldGMM = n2d.UmapGMM(n_clusters)
-
-model.predict(manifoldGMM)
-
-model.visualize(y, names=None, dataset = "fashion_denoise", nclust = n_clusters)
+model.visualize(y, y_names, savePath = "viz/fashion_denoise", nclust = n_clusters)
 print(model.assess(y))

@@ -25,10 +25,11 @@ from sklearn.manifold import LocallyLinearEmbedding
 import pandas as pd
 
 class AutoEncoder:
-    def __init__(self, dims, act = 'relu'):
-        self.dims = dims
+    def __init__(self, data, ndim, architecture, act = 'relu'):
+        shape = [data.shape[-1]] + architecture + [ndim]
+        self.dims = shape
         self.act = act
-        self.x = Input(shape = (dims[0],), name = 'input')
+        self.x = Input(shape = (self.dims[0],), name = 'input')
         self.h = self.x
         n_stacks = len(self.dims) - 1
         for i in range(n_stacks - 1):
@@ -36,7 +37,7 @@ class AutoEncoder:
         self.h = Dense(self.dims[-1], name = 'encoder_%d' % (n_stacks -1))(self.h)
         for i in range(n_stacks - 1, 0, -1):
             self.h = Dense(self.dims[i], activation = self.act, name = 'decoder_%d' % i )(self.h)
-        self.h = Dense(dims[0], name = 'decoder_0')(self.h)
+        self.h = Dense(self.dims[0], name = 'decoder_0')(self.h)
 
         self.Model = Model(inputs = self.x, outputs = self.h)
 
@@ -145,7 +146,10 @@ class n2d:
                  ):
         shape = [x.shape[-1]] + architecture + [ndim]
 
-        self.autoencoder = autoencoder(shape, **ae_args)
+        self.autoencoder = autoencoder(data = x,
+                                       ndim = ndim,
+                                       architecture = architecture,
+                                       **ae_args)
         self.manifoldLearner = manifoldLearner
         self.hidden = self.autoencoder.Model.get_layer(name='encoder_%d' % (len(shape) - 2)).output
         self.encoder = Model(inputs = self.autoencoder.Model.input, outputs = self.hidden)
@@ -166,11 +170,15 @@ class n2d:
                                   loss = loss,
                                   optimizer =optimizer, weights = weights,
                                   verbose = verbose, weightname = weight_id)
-        hl = self.encoder.predict(self.x)
+
+
+    def predict(self, x = None):
+        if (x is None):
+            x_test = self.x
+        else:
+            x_test = x
+        hl = self.encoder.predict(x_test)
         self.manifoldLearner.fit(hl)
-
-
-    def predict(self):
         self.preds = self.manifoldLearner.predict()
         self.hle = self.manifoldLearner.hle
 
