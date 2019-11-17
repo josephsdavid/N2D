@@ -75,33 +75,59 @@ Next, we want to setup the model. In this example, we are going to use the defau
 
 
 
-Next, we need to initialize the N2D object. This requires two arguments: the number of clusters and the data (without labels). ::
+Next, we need to initialize the N2D object. This requires three arguments: the number of dimensions we would like to represent the data as, a manifold clustering mechanism, and the data (without labels). ::
         
         n_clusters = 6
-        harcluster = n2d.n2d(x, nclust = n_clusters)
+        manifoldGMM = n2d.UmapGMM(n_clusters)
+        harcluster = n2d.n2d(x, manifoldGMM, ndim = n_clusters)
 
 
 Simple enough. In this step, the autoencoder is actually built. The encoder takes on a structure (dimensions of data, 500, 500, 2000, n_clusters), while the decoder takes on the mirror of that structure. To alter the structure, we can adjust the architecture component when we initialize. ::
         
-        harcluster_new_arch = n2d.n2d(x, nclust = n_clusters, architecture = [500, 2000, 500, 100])
+        harcluster_new_arch = n2d.n2d(x, manifoldGMM, ndim = n_clusters, architecture = [500, 2000, 500, 100])
 
 
-In this case, the encoder part of the autoencoder would have structure (dimensions of data, 500, 2000, 500, 100, n_clusters). Please note that the autoencoder design defaults are sane, based on academic research, and produce excellent results, so the architecture does not require a lot of change in general.
+In this case, the encoder part of the autoencoder would have structure (dimensions of data, 500, 2000, 500, 100, n_clusters). Please note that the autoencoder design defaults are sane, based on academic research, and produce excellent results, so the architecture does not require a lot of change in general. Lets talk about the default arguments for the n2d initialization method:
+
+
+.. list-table:: n2d init Arguments
+        :widths: 25 25 25
+        :header-rows: 1
+
+        * - Argument
+          - Default
+          - Description
+        * - x
+          - no default
+          - The data
+        * - manifoldLearner
+          - no default, best to use UmapGMM
+          - The manifold learning and clustering mechanism
+        * - autoencoder
+          - the default N2D AutoEncoder class
+          - The class of autoencoder you wish to use. Note this argument is ust a class
+        * - architecture
+          - [500, 500, 2000]
+          - The layout of the hidden layers in the network, presented in list form
+        * - ndim
+          - 10
+          - Number of dimensions you wish to represent the data in with the autoencoder
+        * - ae_args
+          - {"act":"relu"}
+          - dictionary of extra arguments to pass into the autoencoder
+
 
 Learning an Embedding
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Next, we need to train the autoencoder to learn the embedding. This step is pretty easy. As this is our first run of the autoencoder, the only thing we need to input is the name we would like the weights to be stored under, as well as create a weights directory. ::
         
-        import os
-        if not os.path.exists('weights'):
-                os.makedirs('weights')
 
-        harcluster.preTrainEncoder(weight_id = "har")
+        harcluster.fit(weight_id = "weights/har-1000-ae_weights.h5")
 
 This will train the autoencoder, and store the weights in **weights/[WEIGHT_ID]-[NUM_EPOCHS]-ae_weights.h5**. The arguments to the preTrainEncoder method are shown in the table below:
 
-.. list-table:: preTrainEncoder Arguments
+.. list-table:: fit Arguments
         :widths: 25 25 25
         :header-rows: 1
 
@@ -133,15 +159,15 @@ This will train the autoencoder, and store the weights in **weights/[WEIGHT_ID]-
 
 On our next round of the autoencoder, while we fiddle with clustering algorithms, visualizations, or whatever, we can use the preTrainEncoder method to load in our weights as follows. ::
         
-        harcluster.preTrainEncoder(weights = "weights/har-1000-ae_weights.h5")
+        harcluster.fit(weights = "weights/har-1000-ae_weights.h5")
 
 
 Clustering the Embedded Manifold
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Finally, it is time to learn the manifold and cluster it!! To do this, we are going to use a UmapGMM object. ::
+Lets talk a bit more about how we learn the manifold and cluster it!! This is done primarily with the UmapGMM object ::
         
-        manifoldGMM = n2d.UmapGMM(n_clusters, umapdim = n_clusters)
+        manifoldGMM = n2d.UmapGMM(n_clusters)
 
 This initializes the hybrid manifold learner/clustering arguments. In general, UmapGMM performs best, but in a later section we will talk about replacing it with other clustering/manifold learning techniques. The arguments for UmapGMM are shown below:
 
@@ -175,7 +201,9 @@ This initializes the hybrid manifold learner/clustering arguments. In general, U
 
 Finally, we can actually cluster the data! To do this, we pass the clustering mechanism into the N2D predict method. ::
         
-        harcluster.predict(manifoldGMM)
+        harcluster.predict()
+
+By default, the dataset that was fit is clustered. By specifying **x = ...**, we can predict on new data.
 
 This clusters the data and stores the predictions in ::
 
@@ -230,17 +258,10 @@ Looks like we did a pretty good job!! One very interesting thing to note, is eve
 Usage as a Fully Online Model
 ---------------------------------
 
-This is not so much of a code tutorial, but more of a usage discussion. Once the weights of the autoencoder are trained, we can easily use N2D in a fully online (training free) fashion, as follows. Let us assume we have some new data, which we will refer to as **x_new**, which is from the same source as HAR, and we have already pretrained the HAR autoencoder, and have our weights stored somewhere. We can now make predictions without any retraining or labels, as shown below. ::
-      
-        # initialize an n2d object with new data!
-        newHarCluster = n2d.n2d(x_new, nclust = 6)
-        
-        # set up autoencoder with already existing weights!
-        newHarCluster.preTrainEncoder(weights = "weights/har-1000-ae_weights.h5")
+Once the weights have been initialized, we can use an N2D object in a fully online manner, as it is unsupervised learning. This means, if we have some new data, **x_new**, we can just predict using that ::
 
-        manifoldCluster = n2d.UmapGMM(6)
+        harcluster.predict(x_new)
 
-        newHarCluster.predict(manifoldCluster)
-        
 
+This will use the autoencoder to map the data into the proper number of dimensions, and then learn the manifold and cluster that with the new data!
 
