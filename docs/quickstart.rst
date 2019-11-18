@@ -225,7 +225,7 @@ To visualize, we again have a built in method as well as tools for creating your
 
 **Built in**::
 
-        harcluster.visualize(y, y_names, dataset = "har", nclust = n_clusters)
+        harcluster.visualize(y, y_names, savePath = "viz/har", nclust = n_clusters)
 
 **Custom** :
 

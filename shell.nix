@@ -1,19 +1,25 @@
 let
   pkgs = import <stable> {};
 
-  umap = pkgs.callPackage ./umap.nix {
+  transforms3d = pkgs.callPackage ./nix/transforms3d.nix {
     buildPythonPackage = pkgs.python37.pkgs.buildPythonPackage;
     fetchPypi = pkgs.python37.pkgs.fetchPypi;
     pythonSource = pkgs.python37Packages;
   };
 
-  datareader = pkgs.callPackage ./datareader.nix {
+  umap = pkgs.callPackage ./nix/umap.nix {
     buildPythonPackage = pkgs.python37.pkgs.buildPythonPackage;
     fetchPypi = pkgs.python37.pkgs.fetchPypi;
     pythonSource = pkgs.python37Packages;
   };
 
-  n2d = pkgs.callPackage ./n2d.nix {
+  datareader = pkgs.callPackage ./nix/datareader.nix {
+    buildPythonPackage = pkgs.python37.pkgs.buildPythonPackage;
+    fetchPypi = pkgs.python37.pkgs.fetchPypi;
+    pythonSource = pkgs.python37Packages;
+  };
+
+  n2d = pkgs.callPackage ./nix/n2d.nix {
     buildPythonPackage = pkgs.python37.pkgs.buildPythonPackage;
     pythonSource = pkgs.python37Packages;
     umapVar = umap;
@@ -86,6 +92,8 @@ in
       python37Packages.sphinx_rtd_theme
       python37Packages.ipython
       datareader
+      transforms3d
+      python37Packages.statsmodels
     ];
     shellHook = ''
       export SOURCE_DATE_EPOCH=$(date +%s) # 1980
