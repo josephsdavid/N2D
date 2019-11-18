@@ -14,6 +14,7 @@ from . import linear_assignment as la
 
 import umap
 from keras import backend as K
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import Dense, Input
 from keras.models import Model
 from sklearn import metrics
@@ -25,6 +26,28 @@ from sklearn.manifold import LocallyLinearEmbedding
 import pandas as pd
 
 class AutoEncoder:
+    """AutoeEncoder: standard feed forward autoencoder
+
+    Parameters:
+    -----------
+    data: array-like
+        The dataset you are feeding in. Should be in general in the form
+        (m, n), where m is the number of samples, and n is the number of
+        features. You will be learning a representation which reduces n.
+
+    ndim: int
+        The number of dimensions which you wish to represent the data as.
+
+    architecture: list
+        The structure of the hidden architecture of the networks. for example,
+        the n2d default is [500, 500, 2000],
+        which means the encoder has the structure of:
+        [input dim, 500, 500, 2000, ndim], and the decoder has the structure of:
+        [ndim, 2000, 500, 500, input dim]
+
+    act: string
+        The activatin function. Defaults to 'relu'
+    """
     def __init__(self, data, ndim, architecture, act = 'relu'):
         shape = [data.shape[-1]] + architecture + [ndim]
         self.dims = shape
@@ -44,16 +67,50 @@ class AutoEncoder:
     def fit(self, dataset, batch_size = 256, pretrain_epochs = 1000,
                      loss = 'mse', optimizer = 'adam',weights = None,
                      verbose = 0, weightname = 'fashion'):
+
+        """fit: train the autoencoder.
+
+            Parameters:
+                -------------
+                dataset: array-like
+                the data you wish to fit
+
+            batch_size: int
+            the batch size
+
+            pretrain_epochs: int
+            number of epochs you wish to run.
+
+            loss: string or function
+            loss function. Defaults to mse
+
+            optimizer: string or function
+            optimizer. defaults to adam
+
+            weights: string
+            if weights is used, the path to the pretrained nn weights.
+
+            verbose: int
+            how verbose you wish the autoencoder to be while training.
+
+            weightname: string
+            where you wish to save the weights"""
+
         if weights == None:
             self.Model.compile(
                 loss = loss, optimizer = optimizer
             )
+            callbacks = [EarlyStopping(monitor='loss', patience=10),
+                         ModelCheckpoint(filepath=weightname,
+                                         monitor='loss',
+                                         save_best_only=True)]
             self.Model.fit(
                 dataset, dataset,
                 batch_size = batch_size,
-                epochs = pretrain_epochs
+                epochs = pretrain_epochs,
+                callbacks = callbacks, verbose = verbose
             )
-            # make this less stupid
+
             self.Model.save_weights(weightname)
         else:
             self.Model.load_weights(weights)
@@ -61,6 +118,31 @@ class AutoEncoder:
 
 
 class UmapGMM:
+    """
+        UmapGMM: UMAP gaussian mixing
+
+            Parameters:
+            ------------
+            nclust: int
+                the number of clusters
+
+            umapdim: int
+                number of dimensions to find with umap. Defaults to 2
+
+            umapN: int
+                Number of nearest neighbors to use for UMAP. Defaults to 10,
+                20 is also a reasonable choice
+
+            umapMd: float
+                minimum distance for UMAP. Smaller means tighter clusters,
+                defaults to 0
+
+            umapMetric: string or function
+                Distance metric for UMAP. defaults to euclidean distance
+
+            random_state: int
+                random state
+    """
     def __init__(self, nclust,
                  umapdim = 2,
                  umapN = 10,
@@ -136,6 +218,38 @@ def plot(x, y, plot_id, names=None,  savepath = "Generic_figure", n_clusters = 1
     plt.clf()
 
 class n2d:
+    """
+        n2d: Class for n2d
+
+        Parameters:
+        ------------
+
+        x: array-like
+            input data
+
+        manifoldLearner: initialized class, such as UmapGMM
+            the manifold learner and clustering algorithm. Class should have at
+            least fit and predict methods. Needs to be initialized
+
+        autoencoder: class
+            class of the autoencoder. Defaults to standard AutoEncoder class.
+            Class must have a fit method, and be structured similar to the example
+            on read the docs. At the very least, the embedding must be accessible
+            by name (encoder_%d % middle layer index)
+
+        architecture: list
+            hidden architecture of the autoencoder. Defaults to [500,500,2000],
+            meaning that the encoder is [inputdim, 500, 500, 2000, ndim], and
+            the decoder is [ndim, 2000, 500, 500, inputdim].
+
+        ndim: int
+            number of dimensions you wish the autoencoded embedding to be.
+            Defaults to 10. It is reasonable to set this to the number of clusters
+
+        ae_args: dict
+            dictionary of arguments for the autoencoder. Defaults to just
+            setting the activation function to relu
+    """
     def __init__(self,
                  x,
                  manifoldLearner,
@@ -144,7 +258,7 @@ class n2d:
                  ndim = 10,
                  ae_args = {"act":"relu"},
                  ):
-        shape = [x.shape[-1]] + architecture + [ndim]
+
 
         self.autoencoder = autoencoder(data = x,
                                        ndim = ndim,
@@ -162,7 +276,36 @@ class n2d:
 
     def fit(self,batch_size = 256, pretrain_epochs = 1000,
                      loss = 'mse', optimizer = 'adam',weights = None,
-                     verbose = 0, weight_id = 'generic_autoencoder'):
+                     verbose = 1, weight_id = 'generic_autoencoder'):
+
+        """fit: train the autoencoder.
+
+            Parameters:
+                -------------
+                dataset: array-like
+                the data you wish to fit
+
+            batch_size: int
+            the batch size
+
+            pretrain_epochs: int
+            number of epochs you wish to run.
+
+            loss: string or function
+            loss function. Defaults to mse
+
+            optimizer: string or function
+            optimizer. defaults to adam
+
+            weights: string
+            if weights is used, the path to the pretrained nn weights.
+
+            verbose: int
+            how verbose you wish the autoencoder to be while training.
+
+            weight_id: string
+            where you wish to save the weights"""
+
 
         self.autoencoder.fit(dataset = self.x,
                                   batch_size = batch_size,
@@ -192,6 +335,17 @@ class n2d:
 
 
     def visualize(self, y, names, savePath = "Generic_Dataset", nclust = 10):
+        """
+            visualize: visualize the embedding and clusters
+
+            Parameters:
+            -----------
+
+            y: true clusters/labels, if they exist. Numeric
+            names: the names of the clusters, if they exist
+            savePath: path to save figures
+            nclust: number of clusters.
+        """
         y = np.asarray(y)
         y_pred = np.asarray(self.preds)
         hle = self.hle

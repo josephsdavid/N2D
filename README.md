@@ -98,7 +98,7 @@ Now we can make a prediction, as well as visualize and assess. In this step, the
 ```python
 harcluster.predict()
 # predictions are stored in harcluster.preds
-harcluster.visualize(y, y_names, dataset = "har", nclust = n_clusters)
+harcluster.visualize(y, y_names, savePath = "viz/har", nclust = n_clusters)
 print(harcluster.assess(y))
 # (0.81212, 0.71669, 0.64013)
 ```
@@ -210,6 +210,7 @@ class denoisingAutoEncoder:
         n_stacks = len(self.dims) - 1
         for i in range(n_stacks - 1):
             self.h = Dense(self.dims[i + 1], activation = self.act, name = 'encoder_%d' %i)(self.h)
+	# this is open to suggestion for better methods of saving the embedding
         self.h = Dense(self.dims[-1], name = 'encoder_%d' % (n_stacks -1))(self.h)
         for i in range(n_stacks - 1, 0, -1):
             self.h = Dense(self.dims[i], activation = self.act, name = 'decoder_%d' % i )(self.h)
@@ -275,17 +276,22 @@ This will design the networks to be [input dimensions, 500, 500, 2000, output di
 
 - [x] Package library
 - [x] Package data
+- [x] Early stopping
 - [ ] Implement data augmentation techniques for images, sequences, and time series
 - [x] Make autoencoder interchangeable just like the rest
+- [ ] Simpler way to extract embedding
 - [ ] Implement other types of autoencoders as well as convolutional layers
-- [ ] Manage file saving paths better
+- [x] Manage file saving paths better
 - [ ] Implement other promising methods
 - [ ] Make assessment/visualization more extensible
-- [ ] Documentation?
-- [ ] Find an elegant way to deal with pre training weights
+- [x] Documentation?
+- [x] Find an elegant way to deal with pre training weights
 - [ ] Package on Nix
 - [ ] Blog post?
--
+
+# Contributing
+
+N2D is a work in progress and is open to suggestions to make it faster, more extensible, and generally more usable. Please make an issue if you have any ideas of how to be more accessible and more usable! 
 
 
 # Citation

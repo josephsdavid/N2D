@@ -28,7 +28,7 @@ n_clusters = 6
 manifoldGMM = n2d.UmapGMM(n_clusters)
 harcluster = n2d.n2d(x,manifoldGMM, ndim = n_clusters)
 
-harcluster.fit(weights = "weights/har-1000-ae_weights.h5")
+harcluster.fit(weight_id = "weights/early_test.h5")
 
 
 harcluster.predict()

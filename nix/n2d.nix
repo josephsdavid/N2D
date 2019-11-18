@@ -2,7 +2,7 @@
 
     buildPythonPackage rec {
       pname = "n2d";
-      version = "0.1.6";
+      version = "0.1.7";
     
 
       src = ./..;
@@ -19,10 +19,6 @@
         pythonSource.scikitlearn
         pythonSource.numba
         umapVar
-
-
-        
-
       ];
 
     }
