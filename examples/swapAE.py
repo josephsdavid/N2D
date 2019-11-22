@@ -11,6 +11,7 @@ sns.set_context("paper", font_scale=1.3)
 matplotlib.use('agg')
 import tensorflow as tf
 from keras import backend as K
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 import tensorflow as tf
 import sys
@@ -24,42 +25,52 @@ x,y, y_names = data.load_fashion()
 class denoisingAutoEncoder:
     def __init__(self, data, ndim, architecture,
     noise_factor = 0.5, act = 'relu'):
-        dims = [data.shape[-1]] + architecture + [ndim]
-        self.dims = dims
         self.noise_factor = noise_factor
+        shape = [data.shape[-1]] + architecture + [ndim]
+        self.dims = shape
         self.act = act
-        self.x = Input(shape = (dims[0],), name = 'input')
+        self.x = Input(shape = (self.dims[0],), name = 'input')
         self.h = self.x
         n_stacks = len(self.dims) - 1
         for i in range(n_stacks - 1):
             self.h = Dense(self.dims[i + 1], activation = self.act, name = 'encoder_%d' %i)(self.h)
-        self.h = Dense(self.dims[-1], name = 'encoder_%d' % (n_stacks -1))(self.h)
-        for i in range(n_stacks - 1, 0, -1):
-            self.h = Dense(self.dims[i], activation = self.act, name = 'decoder_%d' % i )(self.h)
-        self.h = Dense(dims[0], name = 'decoder_0')(self.h)
+        self.encoder = Dense(self.dims[-1], name = 'encoder_%d' % (n_stacks -1))(self.h)
+        self.decoded = Dense(self.dims[-2], name = 'decoder', activation = self.act)(self.encoder)
+        for i in range(n_stacks - 2, 0, -1):
+            self.decoded = Dense(self.dims[i], activation = self.act, name = 'decoder_%d' % i )(self.decoded)
+        self.decoded = Dense(self.dims[0], name = 'decoder_0')(self.decoded)
 
-        self.Model = Model(inputs = self.x, outputs = self.h)
-
+        self.Model = Model(inputs = self.x, outputs = self.decoded)
+        self.encoder = Model(inputs = self.x, outputs = self.encoder)
     def add_noise(self, x):
-    	# this is the new bit
         x_clean = x
         x_noisy = x_clean + self.noise_factor * np.random.normal(loc = 0.0, scale = 1.0, size = x_clean.shape)
         x_noisy = np.clip(x_noisy, 0., 1.)
 
         return x_clean, x_noisy
 
-    def fit(self, dataset, batch_size = 256, pretrain_epochs = 1000,
+    def fit(self, x, batch_size = 256, pretrain_epochs = 1000,
                      loss = 'mse', optimizer = 'adam',weights = None,
-                     verbose = 0, weightname = 'fashion'):
+                     verbose = 0, weight_id = 'fashion', patience = None):
         if weights == None:
-            x, x_noisy = self.add_noise(dataset)
+            if patience is not None:
+                callbacks = [EarlyStopping(monitor='loss', patience=patience),
+                             ModelCheckpoint(filepath=weightname,
+                                             monitor='loss',
+                                             save_best_only=True)]
+            else:
+                callbacks = [ModelCheckpoint(filepath = weightname,
+                                             monitor = 'loss',
+                                             save_best_only = True)]
+            x, x_noisy = self.add_noise(x)
+
             self.Model.compile(
                 loss = loss, optimizer = optimizer
             )
             self.Model.fit(
                 x_noisy, x,
                 batch_size = batch_size,
-                epochs = pretrain_epochs
+                epochs = pretrain_epochs, callbacks = callbacks
             )
 
             self.Model.save_weights("weights/" + weightname + "-" +
@@ -74,7 +85,7 @@ n_clusters = 10
 
 model = n2d.n2d(x, manifoldLearner=n2d.UmapGMM(n_clusters),autoencoder = denoisingAutoEncoder, ndim = n_clusters, ae_args={'noise_factor': 0.5})
 
-model.fit(weights="weights/fashion_denoise-1000-ae_weights.h5")
+model.fit(weight_id="weights/fashion_denoise-1000-ae_weights.h5")
 
 model.predict()
 

@@ -1,3 +1,6 @@
+# example
+
+
 import n2d
 from n2d import datasets as data
 import matplotlib
@@ -35,18 +38,19 @@ np.random.seed(0)
 x,y, y_names = data.load_har()
 
 n_clusters = 6
-manifoldGMM = n2d.UmapGMM(n_clusters)
+manifoldGMM = n2d.UmapGMM(n_clusters, umapN=10)
 harcluster = n2d.n2d(x,manifoldGMM, ndim = n_clusters)
 
 from keras.utils import print_summary
 print_summary(harcluster.autoencoder.Model)
 
-harcluster.fit(weight_id = "weights/har-early-ae_weights.h5", patience = None)
+harcluster.fit(weight_id = "weights/har-early-ae_weights_relu.h5", patience = None)
 
 
 harcluster.predict()
 
 harcluster.visualize(y, y_names, savePath = "viz/har", nclust = n_clusters)
+
 print(harcluster.assess(y))
 
 

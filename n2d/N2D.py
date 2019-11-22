@@ -58,7 +58,7 @@ class AutoEncoder:
         for i in range(n_stacks - 1):
             self.h = Dense(self.dims[i + 1], activation = self.act, name = 'encoder_%d' %i)(self.h)
         self.encoder = Dense(self.dims[-1], name = 'encoder_%d' % (n_stacks -1))(self.h)
-        self.decoded = Dense(self.dims[-1], name = 'decoder')(self.encoder)
+        self.decoded = Dense(self.dims[-2], name = 'decoder', activation = self.act)(self.encoder)
         for i in range(n_stacks - 2, 0, -1):
             self.decoded = Dense(self.dims[i], activation = self.act, name = 'decoder_%d' % i )(self.decoded)
         self.decoded = Dense(self.dims[0], name = 'decoder_0')(self.decoded)
@@ -66,15 +66,15 @@ class AutoEncoder:
         self.Model = Model(inputs = self.x, outputs = self.decoded)
         self.encoder = Model(inputs = self.x, outputs = self.encoder)
 
-    def fit(self, dataset, batch_size = 256, pretrain_epochs = 1000,
+    def fit(self, x, batch_size = 256, pretrain_epochs = 1000,
                      loss = 'mse', optimizer = 'adam',weights = None,
-                     verbose = 0, weightname = 'fashion', patience = None):
+                     verbose = 0, weight_id = 'fashion', patience = None):
 
         """fit: train the autoencoder.
 
             Parameters:
                 -------------
-                dataset: array-like
+                x: array-like
                 the data you wish to fit
 
             batch_size: int
@@ -95,7 +95,7 @@ class AutoEncoder:
             verbose: int
             how verbose you wish the autoencoder to be while training.
 
-            weightname: string
+            weight_id: string
             where you wish to save the weights
 
             patience: int
@@ -109,21 +109,21 @@ class AutoEncoder:
             )
             if patience is not None:
                 callbacks = [EarlyStopping(monitor='loss', patience=patience),
-                             ModelCheckpoint(filepath=weightname,
+                             ModelCheckpoint(filepath=weight_id,
                                              monitor='loss',
                                              save_best_only=True)]
             else:
-                callbacks = [ModelCheckpoint(filepath = weightname,
+                callbacks = [ModelCheckpoint(filepath = weight_id,
                                              monitor = 'loss',
                                              save_best_only = True)]
             self.Model.fit(
-                dataset, dataset,
+                x, x,
                 batch_size = batch_size,
                 epochs = pretrain_epochs,
                 callbacks = callbacks, verbose = verbose
             )
 
-            self.Model.save_weights(weightname)
+            self.Model.save_weights(weight_id)
         else:
             self.Model.load_weights(weights)
 
@@ -294,8 +294,6 @@ class n2d:
 
             Parameters:
                 -------------
-                dataset: array-like
-                the data you wish to fit
 
             batch_size: int
             the batch size
@@ -321,15 +319,17 @@ class n2d:
             patience: int or None
             if patience is None, do nothing special, otherwise patience is the
             early stopping criteria
+
+
             """
 
 
-        self.autoencoder.fit(dataset = self.x,
+        self.autoencoder.fit(x = self.x,
                                   batch_size = batch_size,
                                   pretrain_epochs = pretrain_epochs,
                                   loss = loss,
                                   optimizer =optimizer, weights = weights,
-                                  verbose = verbose, weightname = weight_id)
+                                  verbose = verbose, weight_id = weight_id, patience = patience)
 
 
     def predict(self, x = None):

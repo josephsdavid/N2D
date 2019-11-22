@@ -74,7 +74,7 @@ import n2d as nd
 
 n_clusters = 6  #there are 6 classes in HAR
 
-manifoldGMM = n2d.UmapGMM(n_clusters)
+manifoldGMM = n2d.UmapGMM(n_clusters) 
 ```
 
 The next step in this framework is to initialize the n2d object, which builds an autoencoder network and gets everything ready for clustering:

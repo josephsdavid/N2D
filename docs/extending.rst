@@ -72,7 +72,7 @@ And there you go! We have made a class that N2D can take in once initialized, an
 Replacing The Autoencoder
 -------------------------------
 
-This is slightly more involved, but still pretty easy! The autoencoder needs to have at least three arguments: **data**, **ndim**, and **architecture**. This allows us to build the autoencoder in a programatic fashion. It also needs a fit method. Below, for a simple example, we will build a denoising autoencoder ::
+This is slightly more involved, but still pretty easy! The autoencoder needs to have at least three arguments: **data**, **ndim**, and **architecture**. It will also need a fit method, a **Model** attribute which represents the entire network, and an **encoder** attribute which represents the encoder part of the autoencoder. This allows us to build the autoencoder in a programatic fashion. It also needs a fit method. Below, for a simple example, we will build a denoising autoencoder ::
 
 
         import os
@@ -125,11 +125,13 @@ This is slightly more involved, but still pretty easy! The autoencoder needs to 
         
                 return x_clean, x_noisy
         
-            def fit(self, dataset, batch_size = 256, pretrain_epochs = 1000,
+            def fit(self, x, batch_size = 256, pretrain_epochs = 1000,
                              loss = 'mse', optimizer = 'adam',weights = None,
-                             verbose = 0, weightname = 'fashion'):
+                             verbose = 0, weightname = 'fashion', patience = None):
                 if weights == None:
-                    x, x_noisy = self.add_noise(dataset)
+                    # here if you imported callbacks from keras you could do
+                    # some early stopping stuff using the patience parameter
+                    x, x_noisy = self.add_noise(x)
                     self.Model.compile(
                         loss = loss, optimizer = optimizer
                     )
@@ -138,7 +140,7 @@ This is slightly more involved, but still pretty easy! The autoencoder needs to 
                         batch_size = batch_size,
                         epochs = pretrain_epochs
                     )
-        
+                    # this can obviously be modified 
                     self.Model.save_weights("weights/" + weightname + "-" +
                                             str(pretrain_epochs) +
                                             "-ae_weights.h5")
@@ -146,7 +148,7 @@ This is slightly more involved, but still pretty easy! The autoencoder needs to 
                     self.Model.load_weights(weights)
 
 
-Again, this code is big, but basically the new class you define needs to build the autoencoder in the __init__ method, and it needs to have a method which fits the autoencoder. The rest is again up to you!
+Again, this code is big, but basically the new class you define needs to build the autoencoder in the __init__ method, it needs to save the encoder network as self.encoder, and the entire autoencoder as self.model, and it needs to have a method which fits the autoencoder. The rest is again up to you!
 
 
 
