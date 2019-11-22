@@ -1,11 +1,11 @@
 [![Documentation Status](https://readthedocs.org/projects/n2d/badge/?version=latest)](https://n2d.readthedocs.io/en/latest/?badge=latest)
 
-Welcome to the extensible autoencoder branch of N2D! Here we will make the autoencoders more easily extensible, without the %d sort of API
-
 
 # Changes
 
-Sklearn-like API. Please note this is a major update, and if you are using a previous version you will have to change your code, as the API has changed!
+* Easily extensible autoencoders!
+
+* Sklearn-like API. Please note this is a major update, and if you are using a previous version you will have to change your code, as the API has changed!
 
 
 # Not Too Deep Clustering
@@ -199,47 +199,62 @@ from keras.models import Model
 
 x,y, y_names = data.load_fashion()
 
-
 class denoisingAutoEncoder:
-    def __init__(self, data, ndim, architecture, 
+    def __init__(self, data, ndim, architecture,
     noise_factor = 0.5, act = 'relu'):
-        dims = [data.shape[-1]] + architecture + [ndim]
-        self.dims = dims
         self.noise_factor = noise_factor
+        shape = [data.shape[-1]] + architecture + [ndim]
+
+	# YOU NEED THESE TWO ATTRIBUTES
+        self.dims = shape
         self.act = act
-        self.x = Input(shape = (dims[0],), name = 'input')
+
+        self.x = Input(shape = (self.dims[0],), name = 'input')
         self.h = self.x
         n_stacks = len(self.dims) - 1
         for i in range(n_stacks - 1):
             self.h = Dense(self.dims[i + 1], activation = self.act, name = 'encoder_%d' %i)(self.h)
-	# this is open to suggestion for better methods of saving the embedding
-        self.h = Dense(self.dims[-1], name = 'encoder_%d' % (n_stacks -1))(self.h)
-        for i in range(n_stacks - 1, 0, -1):
-            self.h = Dense(self.dims[i], activation = self.act, name = 'decoder_%d' % i )(self.h)
-        self.h = Dense(dims[0], name = 'decoder_0')(self.h)
+        self.encoder = Dense(self.dims[-1], name = 'encoder_%d' % (n_stacks -1))(self.h)
+        self.decoded = Dense(self.dims[-2], name = 'decoder', activation = self.act)(self.encoder)
+        for i in range(n_stacks - 2, 0, -1):
+            self.decoded = Dense(self.dims[i], activation = self.act, name = 'decoder_%d' % i )(self.decoded)
+        self.decoded = Dense(self.dims[0], name = 'decoder_0')(self.decoded)
 
-        self.Model = Model(inputs = self.x, outputs = self.h)
+	# YOU NEED THESE TWO ATTRIBUTES
+        self.Model = Model(inputs = self.x, outputs = self.decoded)
+        self.encoder = Model(inputs = self.x, outputs = self.encoder)
 
     def add_noise(self, x):
-    	# this is the new bit
         x_clean = x
         x_noisy = x_clean + self.noise_factor * np.random.normal(loc = 0.0, scale = 1.0, size = x_clean.shape)
         x_noisy = np.clip(x_noisy, 0., 1.)
 
         return x_clean, x_noisy
 
-    def fit(self, dataset, batch_size = 256, pretrain_epochs = 1000,
+	# you will want to keep these arguments more or less the same.
+	# For more customization use the ae_args dict creatively!
+    def fit(self, x, batch_size = 256, pretrain_epochs = 1000,
                      loss = 'mse', optimizer = 'adam',weights = None,
-                     verbose = 0, weightname = 'fashion'):
+                     verbose = 0, weight_id = 'fashion', patience = None):
         if weights == None:
-            x, x_noisy = self.add_noise(dataset)
+            if patience is not None:
+                callbacks = [EarlyStopping(monitor='loss', patience=patience),
+                             ModelCheckpoint(filepath=weightname,
+                                             monitor='loss',
+                                             save_best_only=True)]
+            else:
+                callbacks = [ModelCheckpoint(filepath = weightname,
+                                             monitor = 'loss',
+                                             save_best_only = True)]
+            x, x_noisy = self.add_noise(x)
+
             self.Model.compile(
                 loss = loss, optimizer = optimizer
             )
             self.Model.fit(
                 x_noisy, x,
                 batch_size = batch_size,
-                epochs = pretrain_epochs
+                epochs = pretrain_epochs, callbacks = callbacks
             )
 
             self.Model.save_weights("weights/" + weightname + "-" +
@@ -247,6 +262,7 @@ class denoisingAutoEncoder:
                                     "-ae_weights.h5")
         else:
             self.Model.load_weights(weights)
+
 
 
 n_clusters = 10
@@ -281,7 +297,7 @@ This will design the networks to be [input dimensions, 500, 500, 2000, output di
 - [x] Early stopping
 - [ ] Implement data augmentation techniques for images, sequences, and time series
 - [x] Make autoencoder interchangeable just like the rest
-- [ ] Simpler way to extract embedding
+- [x] Simpler way to extract embedding
 - [ ] Implement other types of autoencoders as well as convolutional layers
 - [x] Manage file saving paths better
 - [ ] Implement other promising methods
