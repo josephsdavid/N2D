@@ -1,5 +1,7 @@
 [![Documentation Status](https://readthedocs.org/projects/n2d/badge/?version=latest)](https://n2d.readthedocs.io/en/latest/?badge=latest)
 
+Welcome to the extensible autoencoder branch of N2D! Here we will make the autoencoders more easily extensible, without the %d sort of API
+
 
 # Changes
 
