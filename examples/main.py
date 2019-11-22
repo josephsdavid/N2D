@@ -44,7 +44,7 @@ harcluster = n2d.n2d(x,manifoldGMM, ndim = n_clusters)
 from keras.utils import print_summary
 print_summary(harcluster.autoencoder.Model)
 
-harcluster.fit(weight_id = "weights/har-early-ae_weights_relu.h5", patience = None)
+harcluster.fit(weights = "weights/har-early-ae_weights_relu.h5", patience = None)
 
 
 harcluster.predict()
