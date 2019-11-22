@@ -57,16 +57,18 @@ class AutoEncoder:
         n_stacks = len(self.dims) - 1
         for i in range(n_stacks - 1):
             self.h = Dense(self.dims[i + 1], activation = self.act, name = 'encoder_%d' %i)(self.h)
-        self.h = Dense(self.dims[-1], name = 'encoder_%d' % (n_stacks -1))(self.h)
-        for i in range(n_stacks - 1, 0, -1):
-            self.h = Dense(self.dims[i], activation = self.act, name = 'decoder_%d' % i )(self.h)
-        self.h = Dense(self.dims[0], name = 'decoder_0')(self.h)
+        self.encoder = Dense(self.dims[-1], name = 'encoder_%d' % (n_stacks -1))(self.h)
+        self.decoded = Dense(self.dims[-1], name = 'decoder')(self.encoder)
+        for i in range(n_stacks - 2, 0, -1):
+            self.decoded = Dense(self.dims[i], activation = self.act, name = 'decoder_%d' % i )(self.decoded)
+        self.decoded = Dense(self.dims[0], name = 'decoder_0')(self.decoded)
 
-        self.Model = Model(inputs = self.x, outputs = self.h)
+        self.Model = Model(inputs = self.x, outputs = self.decoded)
+        self.encoder = Model(inputs = self.x, outputs = self.encoder)
 
     def fit(self, dataset, batch_size = 256, pretrain_epochs = 1000,
                      loss = 'mse', optimizer = 'adam',weights = None,
-                     verbose = 0, weightname = 'fashion'):
+                     verbose = 0, weightname = 'fashion', patience = None):
 
         """fit: train the autoencoder.
 
@@ -94,16 +96,26 @@ class AutoEncoder:
             how verbose you wish the autoencoder to be while training.
 
             weightname: string
-            where you wish to save the weights"""
+            where you wish to save the weights
+
+            patience: int
+            if not None, the early stopping criterion
+            """
+
 
         if weights == None:
             self.Model.compile(
                 loss = loss, optimizer = optimizer
             )
-            callbacks = [EarlyStopping(monitor='loss', patience=10),
-                         ModelCheckpoint(filepath=weightname,
-                                         monitor='loss',
-                                         save_best_only=True)]
+            if patience is not None:
+                callbacks = [EarlyStopping(monitor='loss', patience=patience),
+                             ModelCheckpoint(filepath=weightname,
+                                             monitor='loss',
+                                             save_best_only=True)]
+            else:
+                callbacks = [ModelCheckpoint(filepath = weightname,
+                                             monitor = 'loss',
+                                             save_best_only = True)]
             self.Model.fit(
                 dataset, dataset,
                 batch_size = batch_size,
@@ -265,8 +277,7 @@ class n2d:
                                        architecture = architecture,
                                        **ae_args)
         self.manifoldLearner = manifoldLearner
-        self.hidden = self.autoencoder.Model.get_layer(name='encoder_%d' % (len(self.autoencoder.dims) - 2)).output
-        self.encoder = Model(inputs = self.autoencoder.Model.input, outputs = self.hidden)
+        self.encoder = self.autoencoder.encoder
         self.x = x
         self.ndim = ndim
         self.preds = None
@@ -276,7 +287,8 @@ class n2d:
 
     def fit(self,batch_size = 256, pretrain_epochs = 1000,
                      loss = 'mse', optimizer = 'adam',weights = None,
-                     verbose = 1, weight_id = 'generic_autoencoder'):
+                     verbose = 1, weight_id = 'generic_autoencoder',
+            patience = None):
 
         """fit: train the autoencoder.
 
@@ -304,7 +316,12 @@ class n2d:
             how verbose you wish the autoencoder to be while training.
 
             weight_id: string
-            where you wish to save the weights"""
+            where you wish to save the weights
+
+            patience: int or None
+            if patience is None, do nothing special, otherwise patience is the
+            early stopping criteria
+            """
 
 
         self.autoencoder.fit(dataset = self.x,
