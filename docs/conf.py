@@ -26,7 +26,7 @@ author = 'David Josephs'
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '0.0.5'
+release = '0.1.9'
 
 
 # -- General configuration ---------------------------------------------------
