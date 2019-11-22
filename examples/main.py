@@ -7,6 +7,16 @@ plt.style.use(['seaborn-white', 'seaborn-paper'])
 sns.set_context("paper", font_scale=1.3)
 matplotlib.use('agg')
 
+import os
+os.environ['PYTHONHASHSEED'] = '0'
+os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
+import random as rn
+rn.seed(0)
+import tensorflow as tf
+tf.set_random_seed(0)
+import numpy as np
+np.random.seed(0)
+
 
 #x,y = data.load_pendigits()
 #
@@ -31,7 +41,7 @@ harcluster = n2d.n2d(x,manifoldGMM, ndim = n_clusters)
 from keras.utils import print_summary
 print_summary(harcluster.autoencoder.Model)
 
-harcluster.fit(weight_id = "weights/har-early-ae_weights.h5")
+harcluster.fit(weight_id = "weights/har-early-ae_weights.h5", patience = None)
 
 
 harcluster.predict()
