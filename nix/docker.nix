@@ -23,7 +23,6 @@ let
 
 in pkgs.dockerTools.buildImage {
   name = "n2d";
-  fromImage = deps;
   contents = [n2d];
 }
 

@@ -1,5 +1,5 @@
 let
-  pkgs = import <stable> {};
+  pkgs = import <nixpkgs> {};
 
   transforms3d = pkgs.callPackage ./nix/transforms3d.nix {
     buildPythonPackage = pkgs.python37.pkgs.buildPythonPackage;
@@ -50,7 +50,7 @@ in
       python37Packages.twine
       python37Packages.wheel
       n2d
-      python37Packages.hdbscan
+      #python37Packages.hdbscan
       python37Packages.sphinx
       python37Packages.recommonmark
       python37Packages.sphinx_rtd_theme
