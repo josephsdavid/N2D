@@ -186,6 +186,12 @@ class UmapGMM:
         y_pred = y_prob.argmax(1)
         return(np.asarray(y_pred))
 
+    def transform(self, x):
+        manifold = self.manifoldInEmbedding.transform(x)
+        y_prob = self.clusterManifold.predict_proba(manifold)
+        y_pred = y_prob.argmax(1)
+        return(np.asarray(y_pred))
+
 
 
 
@@ -330,6 +336,8 @@ class n2d:
                                   loss = loss,
                                   optimizer =optimizer, weights = weights,
                                   verbose = verbose, weight_id = weight_id, patience = patience)
+        hl = self.encoder.predict(self.x)
+        self.manifoldLearner.fit(hl)
 
 
     def predict(self, x = None):
@@ -337,10 +345,15 @@ class n2d:
             x_test = self.x
         else:
             x_test = x
-        hl = self.encoder.predict(x_test)
-        self.manifoldLearner.fit(hl)
         self.preds = self.manifoldLearner.predict()
         self.hle = self.manifoldLearner.hle
+        return(self.preds)
+
+    def transform(self, x):
+        hl = self.encoder.predict(x)
+        self.preds = self.manifoldLearner.transform(hl)
+        self.hle = self.manifoldLearner.hle
+        return(self.preds)
 
     def assess(self, y):
         y = np.asarray(y)

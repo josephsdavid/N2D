@@ -35,17 +35,18 @@ np.random.seed(0)
 ##pencluster.visualize(y, names=None, dataset = "pendigits", nclust = n_clusters)
 #print(pencluster.assess(y))
 
-x,y, y_names = data.load_har()
+x,y = data.load_mnist()
 
-n_clusters = 6
+n_clusters = 10
 manifoldGMM = n2d.UmapGMM(n_clusters, umapN=10)
-harcluster = n2d.n2d(x,manifoldGMM, ndim = n_clusters)
+mnistcluster = n2d.n2d(x,manifoldGMM, ndim = n_clusters)
 
 from keras.utils import print_summary
-print_summary(harcluster.autoencoder.Model)
+print_summary(mnistcluster.autoencoder.Model)
 
-harcluster.fit(weights = "weights/har-early-ae_weights_relu.h5", patience = None)
+mnistcluster.fit(weights = "weights/mnist-1000-ae_weights.h5", patience = None)
 
+x_test, y_test = data.load_mnist()
 
 harcluster.predict()
 
