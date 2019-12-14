@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 plt.style.use(['seaborn-white', 'seaborn-paper'])
 sns.set_context("paper", font_scale=1.3)
-matplotlib.use('agg')
 
 import os
 os.environ['PYTHONHASHSEED'] = '0'
@@ -44,15 +43,35 @@ mnistcluster = n2d.n2d(x,manifoldGMM, ndim = n_clusters)
 from keras.utils import print_summary
 print_summary(mnistcluster.autoencoder.Model)
 
+
 mnistcluster.fit(weights = "weights/mnist-1000-ae_weights.h5", patience = None)
 
-x_test, y_test = data.load_mnist()
+preds = mnistcluster.predict()
+mnistcluster.visualize(y,None,  nclust = n_clusters)
+plt.show()
 
-harcluster.predict()
+print(mnistcluster.assess(y))
 
-harcluster.visualize(y, y_names, savePath = "viz/har", nclust = n_clusters)
+x_test, y_test = data.load_mnist_test()
 
-print(harcluster.assess(y))
+# assign new variables in same embedding, transform using autoencoder -> put in
+# same UMAP embedding as the training data -> predict clusters using GMM trained
+# on the training set
+trans = mnistcluster.transform(x_test)
+mnistcluster.visualize(y_test,None,  nclust = n_clusters)
+plt.show()
+
+print(mnistcluster.assess(y_test))
+
+trans
+
+preds = mnistcluster.predict()
+mnistcluster.visualize(y,None,  nclust = n_clusters)
+plt.show()
+
+print(mnistcluster.assess(y))
+
+
 
 
 #from sklearn.cluster import SpectralClustering
