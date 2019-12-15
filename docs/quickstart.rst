@@ -231,14 +231,15 @@ On our next round of the autoencoder, while we fiddle with clustering algorithms
 
 Finally, we can actually cluster the data! To do this, we pass the clustering mechanism into the N2D predict method. ::
         
-        harcluster.predict()
+        preds = harcluster.predict()
 
-By default, the dataset that was fit is clustered. By specifying **x = ...**, we can predict on new data.
+By default, the dataset that was fit is clustered. To predict on new data please use the *.transform* method.
 
 This clusters the data and stores the predictions in ::
 
         harcluster.preds
 
+for your convenience if you want to access the predictions in functions that take in n2d objects.
 
 Assessing and Visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -255,7 +256,8 @@ To visualize, we again have a built in method as well as tools for creating your
 
 **Built in**::
 
-        harcluster.visualize(y, y_names, savePath = "viz/har", nclust = n_clusters)
+        harcluster.visualize(y, y_names, nclust = n_clusters)
+        plt.show()
 
 **Custom** :
 
@@ -285,13 +287,13 @@ These are the predicted clusters, now lets look at the real groupings!
 
 Looks like we did a pretty good job!! One very interesting thing to note, is even though it got some things wrong, where it got them wrong is still useful. The stationary activities are all near each other, while the active activities are all together. N2D, with no features and labels, not only found useful clusters, but ones that provide real world intuition! This is a very powerful result.
 
-Usage as a Fully Online Model
+The '.transform' Method
 ---------------------------------
 
 Once the weights have been initialized, we can use an N2D object in a fully online manner, as it is unsupervised learning. This means, if we have some new data, **x_new**, we can just predict using that ::
 
-        harcluster.predict(x_new)
+        new_preds = harcluster.transform(x_new)
 
 
-This will use the autoencoder to map the data into the proper number of dimensions, and then learn the manifold and cluster that with the new data!
+This will use the autoencoder to map the data into the proper number of dimensions, and then transform it to the manifold learned during fitting, and finally cluster it using the trained clustering mechanism. 
 

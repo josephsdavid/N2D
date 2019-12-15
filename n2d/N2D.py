@@ -30,12 +30,11 @@ class AutoEncoder:
 
     Parameters:
     -----------
-    data: array-like
-        The dataset you are feeding in. Should be in general in the form
-        (m, n), where m is the number of samples, and n is the number of
-        features. You will be learning a representation which reduces n.
+    input_dim: int
+        The number of dimensions of your input
 
-    ndim: int
+
+    output_dim: int
         The number of dimensions which you wish to represent the data as.
 
     architecture: list
@@ -48,8 +47,8 @@ class AutoEncoder:
     act: string
         The activatin function. Defaults to 'relu'
     """
-    def __init__(self, data, ndim, architecture, act = 'relu'):
-        shape = [data.shape[-1]] + architecture + [ndim]
+    def __init__(self, input_dim, output_dim, architecture, act = 'relu'):
+        shape = [input_dim] + architecture + [ndim]
         self.dims = shape
         self.act = act
         self.x = Input(shape = (self.dims[0],), name = 'input')
@@ -181,16 +180,20 @@ class UmapGMM:
         self.hle = self.manifoldInEmbedding.fit_transform(hl)
         self.clusterManifold.fit(self.hle)
 
-    def predict(self):
+    def predict(self, hl):
+        manifold = self.manifoldInEmbedding.transform(hl)
+        y_prob = self.clusterManifold.predict_proba(manifold)
+        y_pred = y_prob.argmax(1)
+        return(np.asarray(y_pred))
+
+    def fit_predict(self, hl):
+        self.hle = self.manifoldInEmbedding.fit_transform(hl)
+        self.clusterManifold.fit(self.hle)
         y_prob = self.clusterManifold.predict_proba(self.hle)
         y_pred = y_prob.argmax(1)
         return(np.asarray(y_pred))
 
-    def transform(self, x):
-        manifold = self.manifoldInEmbedding.transform(x)
-        y_prob = self.clusterManifold.predict_proba(manifold)
-        y_pred = y_prob.argmax(1)
-        return(np.asarray(y_pred))
+
 
 
 
@@ -214,7 +217,7 @@ def cluster_acc(y_true, y_pred):
     _, ind, w = best_cluster_fit(y_true, y_pred)
     return sum([w[i, j] for i, j in ind]) * 1.0 / y_pred.size
 
-def plot(x, y, plot_id, names=None,  savepath = "Generic_figure", n_clusters = 10):
+def plot(x, y, plot_id, names=None, n_clusters = 10):
     viz_df = pd.DataFrame(data=x[:5000])
     viz_df['Label'] = y[:5000]
     if names is not None:
@@ -231,9 +234,7 @@ def plot(x, y, plot_id, names=None,  savepath = "Generic_figure", n_clusters = 1
     plt.ylabel("")
     plt.xlabel("")
     plt.tight_layout()
-    plt.savefig( savepath +
-                '-' + plot_id + '.png', dpi=300)
-    plt.clf()
+    plt.title(plot_id, pad = 50)
 
 class n2d:
     """
@@ -242,8 +243,8 @@ class n2d:
         Parameters:
         ------------
 
-        x: array-like
-            input data
+        input_dim: int
+             dimensions of input
 
         manifoldLearner: initialized class, such as UmapGMM
             the manifold learner and clustering algorithm. Class should have at
@@ -260,7 +261,7 @@ class n2d:
             meaning that the encoder is [inputdim, 500, 500, 2000, ndim], and
             the decoder is [ndim, 2000, 500, 500, inputdim].
 
-        ndim: int
+        ae_dim: int
             number of dimensions you wish the autoencoded embedding to be.
             Defaults to 10. It is reasonable to set this to the number of clusters
 
@@ -268,30 +269,30 @@ class n2d:
             dictionary of arguments for the autoencoder. Defaults to just
             setting the activation function to relu
     """
-    def __init__(self,
-                 x,
+    def __init__(self,input_dim,
                  manifoldLearner,
                  autoencoder = AutoEncoder,
                  architecture = [500,500,2000],
-                 ndim = 10,
+                 ae_dim = 10,
                  ae_args = {"act":"relu"},
                  ):
 
+        # FIGURE THIS OUT!! WHERE DOES X GO??
 
-        self.autoencoder = autoencoder(data = x,
-                                       ndim = ndim,
+
+        self.autoencoder = autoencoder(input_dim = input_dim,
+                                       output_dim = ae_dim,
                                        architecture = architecture,
                                        **ae_args)
         self.manifoldLearner = manifoldLearner
         self.encoder = self.autoencoder.encoder
-        self.x = x
         self.ndim = ndim
         self.preds = None
         self.hle = None
 
 
 
-    def fit(self,batch_size = 256, pretrain_epochs = 1000,
+    def fit(self,x,batch_size = 256, pretrain_epochs = 1000,
                      loss = 'mse', optimizer = 'adam',weights = None,
                      verbose = 1, weight_id = 'generic_autoencoder',
             patience = None):
@@ -299,7 +300,9 @@ class n2d:
         """fit: train the autoencoder.
 
             Parameters:
-                -------------
+            -----------------
+            x: array-like
+            the input data
 
             batch_size: int
             the batch size
@@ -330,28 +333,35 @@ class n2d:
             """
 
 
-        self.autoencoder.fit(x = self.x,
+        self.autoencoder.fit(x = x,
                                   batch_size = batch_size,
                                   pretrain_epochs = pretrain_epochs,
                                   loss = loss,
                                   optimizer =optimizer, weights = weights,
                                   verbose = verbose, weight_id = weight_id, patience = patience)
-        hl = self.encoder.predict(self.x)
+        hl = self.encoder.predict(x)
         self.manifoldLearner.fit(hl)
 
 
-    def predict(self, x = None):
-        if (x is None):
-            x_test = self.x
-        else:
-            x_test = x
-        self.preds = self.manifoldLearner.predict()
+    def predict(self, x):
+        hl = self.encoder.predict(x)
+        self.preds = self.manifoldLearner.predict(hl)
         self.hle = self.manifoldLearner.hle
         return(self.preds)
 
-    def transform(self, x):
+    def fit_predict(self,x,batch_size = 256, pretrain_epochs = 1000,
+                     loss = 'mse', optimizer = 'adam',weights = None,
+                     verbose = 1, weight_id = 'generic_autoencoder',
+            patience = None):
+
+        self.autoencoder.fit(x = x,
+                                  batch_size = batch_size,
+                                  pretrain_epochs = pretrain_epochs,
+                                  loss = loss,
+                                  optimizer =optimizer, weights = weights,
+                                  verbose = verbose, weight_id = weight_id, patience = patience)
         hl = self.encoder.predict(x)
-        self.preds = self.manifoldLearner.transform(hl)
+        self.preds = self.manifoldLearner.fit_predict(hl)
         self.hle = self.manifoldLearner.hle
         return(self.preds)
 
@@ -364,7 +374,7 @@ class n2d:
         return(acc, nmi, ari)
 
 
-    def visualize(self, y, names, savePath = "Generic_Dataset", nclust = 10):
+    def visualize(self, y, names,  nclust = 10):
         """
             visualize: visualize the embedding and clusters
 
@@ -379,6 +389,6 @@ class n2d:
         y = np.asarray(y)
         y_pred = np.asarray(self.preds)
         hle = self.hle
-        plot(hle, y, 'n2d', names, savepath = savePath, n_clusters = nclust)
+        plot(hle, y, 'n2d', names,  n_clusters = nclust)
         y_pred_viz, _, _ = best_cluster_fit(y, y_pred)
-        plot(hle, y_pred_viz, 'n2d-predicted', names, savepath = savePath, n_clusters = nclust)
+        plot(hle, y_pred_viz, 'n2d-predicted', names,  n_clusters = nclust)
