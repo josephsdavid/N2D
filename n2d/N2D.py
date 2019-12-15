@@ -41,14 +41,14 @@ class AutoEncoder:
         The structure of the hidden architecture of the networks. for example,
         the n2d default is [500, 500, 2000],
         which means the encoder has the structure of:
-        [input dim, 500, 500, 2000, ndim], and the decoder has the structure of:
-        [ndim, 2000, 500, 500, input dim]
+        [input_dim, 500, 500, 2000, output_dim], and the decoder has the structure of:
+        [output_dim, 2000, 500, 500, input dim]
 
     act: string
-        The activatin function. Defaults to 'relu'
+        The activation function. Defaults to 'relu'
     """
     def __init__(self, input_dim, output_dim, architecture, act = 'relu'):
-        shape = [input_dim] + architecture + [ndim]
+        shape = [input_dim] + architecture + [output_dim]
         self.dims = shape
         self.act = act
         self.x = Input(shape = (self.dims[0],), name = 'input')
@@ -258,8 +258,8 @@ class n2d:
 
         architecture: list
             hidden architecture of the autoencoder. Defaults to [500,500,2000],
-            meaning that the encoder is [inputdim, 500, 500, 2000, ndim], and
-            the decoder is [ndim, 2000, 500, 500, inputdim].
+            meaning that the encoder is [input_dim, 500, 500, 2000, ae_dim], and
+            the decoder is [ae_dim, 2000, 500, 500, input_dim].
 
         ae_dim: int
             number of dimensions you wish the autoencoded embedding to be.
@@ -286,7 +286,6 @@ class n2d:
                                        **ae_args)
         self.manifoldLearner = manifoldLearner
         self.encoder = self.autoencoder.encoder
-        self.ndim = ndim
         self.preds = None
         self.hle = None
 

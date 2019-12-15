@@ -23,12 +23,21 @@ n_clusters = 10
 manifoldGMM = n2d.UmapGMM(n_clusters, umapN=10)
 mnistcluster = n2d.n2d(input_dim = x.shape[-1], manifoldLearner =  manifoldGMM, ae_dim = n_clusters)
 
-
+# fit
+mnistcluster.fit(x,weights = "weights/mnist-1000-ae_weights.h5", patience = None)
+preds_0 = mniscluster.predict(x)
 
 # fit_predict
-
-
 preds_1 = mnistcluster.fit_predict(x,weights = "weights/mnist-1000-ae_weights.h5", patience = None)
-
 mnistcluster.visualize(y, None, nclust = n_clusters)
 plt.show()
+
+mnistcluster.assess(y)
+
+
+
+# predict
+x_test, y_test = data.load_mnist_test()
+
+preds_2 = mnistcluster.predict(x_test)
+mnistcluster.assess(y_test)
