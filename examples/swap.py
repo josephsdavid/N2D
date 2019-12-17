@@ -1,63 +1,63 @@
 import n2d
+import numpy as np
 from sklearn.cluster import KMeans
 import umap
 
 from n2d import datasets as data
+
 x, y, y_names = data.load_har()
 
 
 class UmapKmeans:
     # you can pass whatever parameters you need too.
-    def __init__(self, nclust,
-                 umapdim = 2,
-                 umapN = 10,
-                 umapMd = float(0),
-                 umapMetric = 'euclidean',
-                 random_state = 0
+    def __init__(self, n_clusters,
+                 umap_dim=2,
+                 umap_neighbors=10,
+                 umap_min_distance=float(0),
+                 umap_metric='euclidean',
+                 random_state=0
                  ):
-        self.nclust = nclust
-        # change this bit for changing the manifold learner
-        self.manifoldInEmbedding = umap.UMAP(
-            random_state = random_state,
-            metric = umapMetric,
-            n_components = umapdim,
-            n_neighbors = umapN,
-            min_dist = umapMd
-        )
-        # change this bit to change the clustering mechanism
-        self.clusterManifold = KMeans(
-            n_clusters = nclust,
-            random_state = random_state,
-            n_jobs = -1
+
+        self.n_clusters = n_clusters
+
+        self.manifold_in_embedding = umap.UMAP(
+            random_state=random_state,
+            metric=umap_metric,
+            n_components=umap_dim,
+            n_neighbors=umap_neighbors,
+            min_dist=umap_min_distance
         )
 
+        self.cluster_manifold = KMeans(
+            n_clusters=n_clusters,
+            random_state=random_state,
+            n_jobs=-1
+        )
         self.hle = None
 
     def fit(self, hl):
-        self.hle = self.manifoldInEmbedding.fit_transform(hl)
-        self.clusterManifold.fit(self.hle)
+        self.hle = self.manifold_in_embedding.fit_transform(hl)
+        self.cluster_manifold.fit(self.hle)
 
-    def predict(self):
-        # obviously if you change the clustering method or the manifold learner
-        # youll want to change the predict method too.
-        y_pred = self.clusterManifold.predict(self.hle)
-        return(y_pred)
+    def predict(self, hl):
+        manifold = self.manifold_in_embedding.transform(hl)
+        y_pred = self.cluster_manifold.predict(manifold)
+        return(np.asarray(y_pred))
 
-    # transform new data into the manifold, and then predict that
-    def transform(self, x):
-        manifold = self.manifoldInEmbedding.transform(x)
-        y_pred = self.clusterManifold.predict(manifold)
+    def fit_predict(self, hl):
+        self.hle = self.manifold_in_embedding.fit_transform(hl)
+        self.cluster_manifold.fit(self.hle)
+        y_pred = self.cluster_manifold.predict(self.hle)
         return(np.asarray(y_pred))
 
 
-
 manifoldKM = UmapKmeans(6)
-kmclust = n2d.n2d(x, manifoldKM, ndim = 6)
+kmclust = n2d.n2d(x.shape[-1], manifoldKM, 6)
 
 # now we can continue as normal!
 
-kmclust.fit(weights = "weights/har-1000-ae_weights.h5")
+kmclust.fit(x, weights="weights/har-1000-ae_weights.h5")
 
-kmclust.predict()
+kmclust.predict(x)
 print(kmclust.assess(y))
-
+kmclust.visualize(y, None, 6)

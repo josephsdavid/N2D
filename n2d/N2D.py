@@ -1,29 +1,17 @@
-import os
-import random as rn
-
-import matplotlib
 import matplotlib.pyplot as plt
-import seaborn as sns
-
-import pandas as pd
 import numpy as np
-import sys
+import pandas as pd
+import seaborn as sns
 import tensorflow as tf
-
-from . import linear_assignment as la
-
 import umap
 from keras import backend as K
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import Dense, Input
 from keras.models import Model
-from sklearn import metrics
-from sklearn import mixture
-from sklearn.cluster import KMeans, SpectralClustering
-from sklearn.manifold import Isomap
-from sklearn.manifold import LocallyLinearEmbedding
+from sklearn import metrics, mixture
 
-import pandas as pd
+from . import linear_assignment as la
+
 
 class AutoEncoder:
     """AutoeEncoder: standard feed forward autoencoder
@@ -47,28 +35,31 @@ class AutoEncoder:
     act: string
         The activation function. Defaults to 'relu'
     """
-    def __init__(self, input_dim, output_dim, architecture, act = 'relu'):
+    def __init__(self, input_dim, output_dim, architecture, act='relu'):
         shape = [input_dim] + architecture + [output_dim]
         self.dims = shape
         self.act = act
-        self.x = Input(shape = (self.dims[0],), name = 'input')
+        self.x = Input(shape=(self.dims[0],), name='input')
         self.h = self.x
         n_stacks = len(self.dims) - 1
         for i in range(n_stacks - 1):
-            self.h = Dense(self.dims[i + 1], activation = self.act, name = 'encoder_%d' %i)(self.h)
-        self.encoder = Dense(self.dims[-1], name = 'encoder_%d' % (n_stacks -1))(self.h)
-        self.decoded = Dense(self.dims[-2], name = 'decoder', activation = self.act)(self.encoder)
+            self.h = Dense(
+                self.dims[i + 1], activation=self.act, name='encoder_%d' % i)(self.h)
+        self.encoder = Dense(
+            self.dims[-1], name='encoder_%d' % (n_stacks - 1))(self.h)
+        self.decoded = Dense(
+            self.dims[-2], name='decoder', activation=self.act)(self.encoder)
         for i in range(n_stacks - 2, 0, -1):
-            self.decoded = Dense(self.dims[i], activation = self.act, name = 'decoder_%d' % i )(self.decoded)
-        self.decoded = Dense(self.dims[0], name = 'decoder_0')(self.decoded)
+            self.decoded = Dense(
+                self.dims[i], activation=self.act, name='decoder_%d' % i)(self.decoded)
+        self.decoded = Dense(self.dims[0], name='decoder_0')(self.decoded)
 
-        self.Model = Model(inputs = self.x, outputs = self.decoded)
-        self.encoder = Model(inputs = self.x, outputs = self.encoder)
+        self.Model = Model(inputs=self.x, outputs=self.decoded)
+        self.encoder = Model(inputs=self.x, outputs=self.encoder)
 
-    def fit(self, x, batch_size = 256, pretrain_epochs = 1000,
-                     loss = 'mse', optimizer = 'adam',weights = None,
-                     verbose = 0, weight_id = 'fashion', patience = None):
-
+    def fit(self, x, batch_size=256, pretrain_epochs=1000,
+            loss='mse', optimizer='adam', weights=None,
+            verbose=0, weight_id='fashion', patience=None):
         """fit: train the autoencoder.
 
             Parameters:
@@ -101,10 +92,9 @@ class AutoEncoder:
             if not None, the early stopping criterion
             """
 
-
-        if weights == None:
+        if weights is None:
             self.Model.compile(
-                loss = loss, optimizer = optimizer
+                loss=loss, optimizer=optimizer
             )
             if patience is not None:
                 callbacks = [EarlyStopping(monitor='loss', patience=patience),
@@ -112,20 +102,19 @@ class AutoEncoder:
                                              monitor='loss',
                                              save_best_only=True)]
             else:
-                callbacks = [ModelCheckpoint(filepath = weight_id,
-                                             monitor = 'loss',
-                                             save_best_only = True)]
+                callbacks = [ModelCheckpoint(filepath=weight_id,
+                                             monitor='loss',
+                                             save_best_only=True)]
             self.Model.fit(
                 x, x,
-                batch_size = batch_size,
-                epochs = pretrain_epochs,
-                callbacks = callbacks, verbose = verbose
+                batch_size=batch_size,
+                epochs=pretrain_epochs,
+                callbacks=callbacks, verbose=verbose
             )
 
             self.Model.save_weights(weight_id)
         else:
             self.Model.load_weights(weights)
-
 
 
 class UmapGMM:
@@ -134,68 +123,65 @@ class UmapGMM:
 
             Parameters:
             ------------
-            nclust: int
+            n_clusters: int
                 the number of clusters
 
-            umapdim: int
+            umap_dim: int
                 number of dimensions to find with umap. Defaults to 2
 
-            umapN: int
+            umap_neighbors: int
                 Number of nearest neighbors to use for UMAP. Defaults to 10,
                 20 is also a reasonable choice
 
-            umapMd: float
+            umap_min_distance: float
                 minimum distance for UMAP. Smaller means tighter clusters,
                 defaults to 0
 
-            umapMetric: string or function
+            umap_metric: string or function
                 Distance metric for UMAP. defaults to euclidean distance
 
             random_state: int
                 random state
     """
-    def __init__(self, nclust,
-                 umapdim = 2,
-                 umapN = 10,
-                 umapMd = float(0),
-                 umapMetric = 'euclidean',
-                 random_state = 0
+
+    def __init__(self, n_clusters,
+                 umap_dim=2,
+                 umap_neighbors=10,
+                 umap_min_distance=float(0),
+                 umap_metric='euclidean',
+                 random_state=0
                  ):
-        self.nclust = nclust
-        self.manifoldInEmbedding = umap.UMAP(
-            random_state = random_state,
-            metric = umapMetric,
-            n_components = umapdim,
-            n_neighbors = umapN,
-            min_dist = umapMd
+        self.n_clusters = n_clusters
+        self.manifold_in_embedding = umap.UMAP(
+            random_state=random_state,
+            metric=umap_metric,
+            n_components=umap_dim,
+            n_neighbors=umap_neighbors,
+            min_dist=umap_min_distance
         )
 
-        self.clusterManifold = mixture.GaussianMixture(
-            covariance_type = 'full',
-            n_components = nclust, random_state = random_state
+        self.cluster_manifold = mixture.GaussianMixture(
+            covariance_type='full',
+            n_components=n_clusters, random_state=random_state
         )
         self.hle = None
 
     def fit(self, hl):
-        self.hle = self.manifoldInEmbedding.fit_transform(hl)
-        self.clusterManifold.fit(self.hle)
+        self.hle = self.manifold_in_embedding.fit_transform(hl)
+        self.cluster_manifold.fit(self.hle)
 
     def predict(self, hl):
-        manifold = self.manifoldInEmbedding.transform(hl)
-        y_prob = self.clusterManifold.predict_proba(manifold)
+        manifold = self.manifold_in_embedding.transform(hl)
+        y_prob = self.cluster_manifold.predict_proba(manifold)
         y_pred = y_prob.argmax(1)
         return(np.asarray(y_pred))
 
     def fit_predict(self, hl):
-        self.hle = self.manifoldInEmbedding.fit_transform(hl)
-        self.clusterManifold.fit(self.hle)
-        y_prob = self.clusterManifold.predict_proba(self.hle)
+        self.hle = self.manifold_in_embedding.fit_transform(hl)
+        self.cluster_manifold.fit(self.hle)
+        y_prob = self.cluster_manifold.predict_proba(self.hle)
         y_pred = y_prob.argmax(1)
         return(np.asarray(y_pred))
-
-
-
-
 
 
 def best_cluster_fit(y_true, y_pred):
@@ -213,11 +199,13 @@ def best_cluster_fit(y_true, y_pred):
                 best_fit.append(ind[j][1])
     return best_fit, ind, w
 
+
 def cluster_acc(y_true, y_pred):
     _, ind, w = best_cluster_fit(y_true, y_pred)
     return sum([w[i, j] for i, j in ind]) * 1.0 / y_pred.size
 
-def plot(x, y, plot_id, names=None, n_clusters = 10):
+
+def plot(x, y, plot_id, names=None, n_clusters=10):
     viz_df = pd.DataFrame(data=x[:5000])
     viz_df['Label'] = y[:5000]
     if names is not None:
@@ -234,7 +222,8 @@ def plot(x, y, plot_id, names=None, n_clusters = 10):
     plt.ylabel("")
     plt.xlabel("")
     plt.tight_layout()
-    plt.title(plot_id, pad = 50)
+    plt.title(plot_id, pad=50)
+
 
 class n2d:
     """
@@ -246,7 +235,7 @@ class n2d:
         input_dim: int
              dimensions of input
 
-        manifoldLearner: initialized class, such as UmapGMM
+        manifold_learner: initialized class, such as UmapGMM
             the manifold learner and clustering algorithm. Class should have at
             least fit and predict methods. Needs to be initialized
 
@@ -269,33 +258,30 @@ class n2d:
             dictionary of arguments for the autoencoder. Defaults to just
             setting the activation function to relu
     """
-    def __init__(self,input_dim,
-                 manifoldLearner,
-                 autoencoder = AutoEncoder,
-                 architecture = [500,500,2000],
-                 ae_dim = 10,
-                 ae_args = {"act":"relu"},
+
+    def __init__(self, input_dim,
+                 manifold_learner,
+                 ae_dim=10,
+                 autoencoder=AutoEncoder,
+                 architecture=[500, 500, 2000],
+                 ae_args={"act": "relu"},
                  ):
 
         # FIGURE THIS OUT!! WHERE DOES X GO??
 
-
-        self.autoencoder = autoencoder(input_dim = input_dim,
-                                       output_dim = ae_dim,
-                                       architecture = architecture,
+        self.autoencoder = autoencoder(input_dim=input_dim,
+                                       output_dim=ae_dim,
+                                       architecture=architecture,
                                        **ae_args)
-        self.manifoldLearner = manifoldLearner
+        self.manifold_learner = manifold_learner
         self.encoder = self.autoencoder.encoder
         self.preds = None
         self.hle = None
 
-
-
-    def fit(self,x,batch_size = 256, pretrain_epochs = 1000,
-                     loss = 'mse', optimizer = 'adam',weights = None,
-                     verbose = 1, weight_id = 'generic_autoencoder',
-            patience = None):
-
+    def fit(self, x, batch_size=256, pretrain_epochs=1000,
+            loss='mse', optimizer='adam', weights=None,
+            verbose=1, weight_id='generic_autoencoder',
+            patience=None):
         """fit: train the autoencoder.
 
             Parameters:
@@ -331,37 +317,35 @@ class n2d:
 
             """
 
-
-        self.autoencoder.fit(x = x,
-                                  batch_size = batch_size,
-                                  pretrain_epochs = pretrain_epochs,
-                                  loss = loss,
-                                  optimizer =optimizer, weights = weights,
-                                  verbose = verbose, weight_id = weight_id, patience = patience)
+        self.autoencoder.fit(x=x,
+                             batch_size=batch_size,
+                             pretrain_epochs=pretrain_epochs,
+                             loss=loss,
+                             optimizer=optimizer, weights=weights,
+                             verbose=verbose, weight_id=weight_id, patience=patience)
         hl = self.encoder.predict(x)
-        self.manifoldLearner.fit(hl)
-
+        self.manifold_learner.fit(hl)
 
     def predict(self, x):
         hl = self.encoder.predict(x)
-        self.preds = self.manifoldLearner.predict(hl)
-        self.hle = self.manifoldLearner.hle
+        self.preds = self.manifold_learner.predict(hl)
+        self.hle = self.manifold_learner.hle
         return(self.preds)
 
-    def fit_predict(self,x,batch_size = 256, pretrain_epochs = 1000,
-                     loss = 'mse', optimizer = 'adam',weights = None,
-                     verbose = 1, weight_id = 'generic_autoencoder',
-            patience = None):
+    def fit_predict(self, x, batch_size=256, pretrain_epochs=1000,
+                    loss='mse', optimizer='adam', weights=None,
+                    verbose=1, weight_id='generic_autoencoder',
+                    patience=None):
 
-        self.autoencoder.fit(x = x,
-                                  batch_size = batch_size,
-                                  pretrain_epochs = pretrain_epochs,
-                                  loss = loss,
-                                  optimizer =optimizer, weights = weights,
-                                  verbose = verbose, weight_id = weight_id, patience = patience)
+        self.autoencoder.fit(x=x,
+                             batch_size=batch_size,
+                             pretrain_epochs=pretrain_epochs,
+                             loss=loss,
+                             optimizer=optimizer, weights=weights,
+                             verbose=verbose, weight_id=weight_id, patience=patience)
         hl = self.encoder.predict(x)
-        self.preds = self.manifoldLearner.fit_predict(hl)
-        self.hle = self.manifoldLearner.hle
+        self.preds = self.manifold_learner.fit_predict(hl)
+        self.hle = self.manifold_learner.hle
         return(self.preds)
 
     def assess(self, y):
@@ -372,8 +356,7 @@ class n2d:
 
         return(acc, nmi, ari)
 
-
-    def visualize(self, y, names,  nclust = 10):
+    def visualize(self, y, names,  n_clusters=10):
         """
             visualize: visualize the embedding and clusters
 
@@ -383,11 +366,11 @@ class n2d:
             y: true clusters/labels, if they exist. Numeric
             names: the names of the clusters, if they exist
             savePath: path to save figures
-            nclust: number of clusters.
+            n_clusters: number of clusters.
         """
         y = np.asarray(y)
         y_pred = np.asarray(self.preds)
         hle = self.hle
-        plot(hle, y, 'n2d', names,  n_clusters = nclust)
+        plot(hle, y, 'n2d', names,  n_clusters=n_clusters)
         y_pred_viz, _, _ = best_cluster_fit(y, y_pred)
-        plot(hle, y_pred_viz, 'n2d-predicted', names,  n_clusters = nclust)
+        plot(hle, y_pred_viz, 'n2d-predicted', names,  n_clusters=n_clusters)
