@@ -7,6 +7,8 @@
 
 * Sklearn-like API. Please note this is a major update, and if you are using a previous version you will have to change your code, as the API has changed!
 
+* Even more sklearn like with standard fit, fit_predict, and predict methods 
+
 
 # Not Too Deep Clustering
 
