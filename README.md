@@ -80,27 +80,27 @@ manifoldGMM = n2d.UmapGMM(n_clusters)
 The next step in this framework is to initialize the n2d object, which builds an autoencoder network and gets everything ready for clustering:
 
 ```python
-harcluster = n2d.n2d(x,manifoldGMM, ndim = n_clusters)
+harcluster = n2d.n2d(x.shape[-1], manifoldGMM, ae_dim = n_clusters)
 ```
 
 Next, we fit the data. In this step, the autoencoder is trained on the data, setting up weights.
 
 ```python
-harcluster.fit(weight_id = "har")
+harcluster.fit(x, weight_id = "har")
 ```
 
 The next time we want to use this autoencoder, we will instead use the weights argument:
 
 ```python
-harcluster.fit(weights = "har-1000-ae_weights.h5")
+harcluster.fit(x, weights = "har-1000-ae_weights.h5")
 ```
 
 Now we can make a prediction, as well as visualize and assess. In this step, the manifold learner learns the manifold for the data, which is then clustered. By default, it makes the prediction on the data stored internally, however you can specify a new `x` in order to make predictions on new data.
 
 ```python
-harcluster.predict()
+preds = harcluster.predict(x)
 # predictions are stored in harcluster.preds
-harcluster.visualize(y, y_names, savePath = "viz/har", nclust = n_clusters)
+harcluster.visualize(y, y_names, n_clusters = n_clusters)
 print(harcluster.assess(y))
 # (0.81212, 0.71669, 0.64013)
 ```
@@ -118,59 +118,83 @@ Actual clusters
 
 ### Replacing the manifold clustering mechanism
 
-So far, this framework only includes the method for manifold clustering which the authors of the paper deemed best, umap with gaussian mixture clustering. Lets say however we want to try out spectral clustering instead:
+So far, this framework only includes the method for manifold clustering which the authors of the paper deemed best, umap with gaussian mixture clustering. Lets say however we want to try out K means instead
 
 ```python
-from sklearn.cluster import SpectralClustering
+import n2d
+import numpy as np
+from sklearn.cluster import KMeans
 import umap
-class UmapSpectral:
-    def __init__(self, nclust,
-                 umapdim = 2,
-                 umapN = 10,
-                 umapMd = float(0),
-                 umapMetric = 'euclidean',
-		 random_state = 0
+
+from n2d import datasets as data
+
+x, y, y_names = data.load_har()
+
+class UmapKmeans:
+    # you can pass whatever parameters you need to here
+    def __init__(self, n_clusters,
+                 umap_dim=2,
+                 umap_neighbors=10,
+                 umap_min_distance=float(0),
+                 umap_metric='euclidean',
+                 random_state=0
                  ):
-        self.nclust = nclust
-	# change this bit for changing the manifold learner
-        self.manifoldInEmbedding = umap.UMAP(
-            random_state = random_state,
-            metric = umapMetric,
-            n_components = umapdim,
-            n_neighbors = umapN,
-            min_dist = umapMd
+        # This parameter is not necessary but i find it useful 
+        self.n_clusters = n_clusters
+        
+        # this is how I generally structure this code, easy to modify
+        self.manifold_in_embedding = umap.UMAP(
+            random_state=random_state,
+            metric=umap_metric,
+            n_components=umap_dim,
+            n_neighbors=umap_neighbors,
+            min_dist=umap_min_distance
         )
-	# change this bit to change the clustering mechanism
-	self.clusterManifold = SpectralClustering(
-		n_clusters = nclust,
-		affinity = 'nearest_neighbors',
-		random_state = random_state
-	)
 
-	self.hle = None
-
-
+        self.cluster_manifold = KMeans(
+            n_clusters=n_clusters,
+            random_state=random_state,
+            n_jobs=-1
+        )
+        self.hle = None
+    
+    # fit method takes in one argument, the embedding! important
     def fit(self, hl):
-        self.hle = self.manifoldInEmbedding.fit_transform(hl)
-        self.clusterManifold.fit(self.hle)
+        self.hle = self.manifold_in_embedding.fit_transform(hl)
+        self.cluster_manifold.fit(self.hle)
+    
+    # takes in the embedding!
+    def predict(self, hl):
+        manifold = self.manifold_in_embedding.transform(hl)
+        y_pred = self.cluster_manifold.predict(manifold)
+        return(np.asarray(y_pred))
 
-    def predict(self):
-    # obviously if you change the clustering method or the manifold learner
-    # youll want to change the predict method too.
-	y_pred = self.clusterManifold.fit_predict(self.hle)
-        return(y_pred)
+    # takes in the embedding!
+    def fit_predict(self, hl):
+        self.hle = self.manifold_in_embedding.fit_transform(hl)
+        self.cluster_manifold.fit(self.hle)
+        y_pred = self.cluster_manifold.predict(self.hle)
+        return(np.asarray(y_pred))
 ```
 
 Now we can run and assess our new clustering method:
 
 ```python
-manifoldSC = UmapSpectral(6)
-SCclust = n2d.n2d(x, manifoldSC, ndim = n_clusters)
-# weights from the examples folder
-SCclust.fit(weights = "weights/har-1000-ae_weights.h5")
-SCclust.predict()
-print(SCclust.assess(y))
-# (0.40946, 0.42137, 0.14973)
+import n2d
+from n2d import datasets as data
+import matplotlib.pyplot as plt
+x, y, y_names = data.load_har()
+
+manifoldKM = UmapKmeans(6)
+kmclust = n2d.n2d(x.shape[-1], manifoldKM, 6)
+
+# now we can continue as normal!
+
+kmclust.fit(x, weights="weights/har-1000-ae_weights.h5")
+
+_ = kmclust.predict(x)
+print(kmclust.assess(y))
+# (0.81668, 0.71208, 0.64484) 
 ```
 
 This clearly did not go as well, however we can see that it is very easy to extend this library. We could also try out swapping UMAP for ISOMAP, the clustering method with kmeans, or maybe with a deep clustering technique. 
@@ -199,30 +223,36 @@ from keras.models import Model
 
 x,y, y_names = data.load_fashion()
 
-class denoisingAutoEncoder:
-    def __init__(self, data, ndim, architecture,
-    noise_factor = 0.5, act = 'relu'):
-        self.noise_factor = noise_factor
-        shape = [data.shape[-1]] + architecture + [ndim]
 
-	# YOU NEED THESE TWO ATTRIBUTES
+class denoisingAutoEncoder:
+    def __init__(self, input_dim, output_dim, architecture, noise_factor = 0.5, act='relu'):
+        self.noise_factor = noise_factor
+        shape = [input_dim] + architecture + [output_dim]
         self.dims = shape
         self.act = act
-
-        self.x = Input(shape = (self.dims[0],), name = 'input')
+        self.x = Input(shape=(self.dims[0],), name='input')
         self.h = self.x
         n_stacks = len(self.dims) - 1
-        for i in range(n_stacks - 1):
-            self.h = Dense(self.dims[i + 1], activation = self.act, name = 'encoder_%d' %i)(self.h)
-        self.encoder = Dense(self.dims[-1], name = 'encoder_%d' % (n_stacks -1))(self.h)
-        self.decoded = Dense(self.dims[-2], name = 'decoder', activation = self.act)(self.encoder)
-        for i in range(n_stacks - 2, 0, -1):
-            self.decoded = Dense(self.dims[i], activation = self.act, name = 'decoder_%d' % i )(self.decoded)
-        self.decoded = Dense(self.dims[0], name = 'decoder_0')(self.decoded)
 
-	# YOU NEED THESE TWO ATTRIBUTES
-        self.Model = Model(inputs = self.x, outputs = self.decoded)
-        self.encoder = Model(inputs = self.x, outputs = self.encoder)
+        # this is how I like to set up the networkm however however you want to do it it doesnt matter.
+        # it NEEDS to have a self.encoder attribute
+        for i in range(n_stacks - 1):
+            self.h = Dense(
+                self.dims[i + 1], activation=self.act, name='encoder_%d' % i)(self.h)
+        self.encoder = Dense(
+            self.dims[-1], name='encoder_%d' % (n_stacks - 1))(self.h)
+        self.decoded = Dense(
+            self.dims[-2], name='decoder', activation=self.act)(self.encoder)
+        for i in range(n_stacks - 2, 0, -1):
+            self.decoded = Dense(
+                self.dims[i], activation=self.act, name='decoder_%d' % i)(self.decoded)
+        self.decoded = Dense(self.dims[0], name='decoder_0')(self.decoded)
+
+        self.Model = Model(inputs=self.x, outputs=self.decoded)
+
+        # NEEDED!!
+        self.encoder = Model(inputs=self.x, outputs=self.encoder)
+
 
     def add_noise(self, x):
         x_clean = x
@@ -231,52 +261,47 @@ class denoisingAutoEncoder:
 
         return x_clean, x_noisy
 
-	# you will want to keep these arguments more or less the same.
-	# For more customization use the ae_args dict creatively!
     def fit(self, x, batch_size = 256, pretrain_epochs = 1000,
                      loss = 'mse', optimizer = 'adam',weights = None,
                      verbose = 0, weight_id = 'fashion', patience = None):
-        if weights == None:
+
+        x, x_noisy = self.add_noise(x)
+        if weights is None:
+            self.Model.compile(
+                loss=loss, optimizer=optimizer
+            )
             if patience is not None:
                 callbacks = [EarlyStopping(monitor='loss', patience=patience),
-                             ModelCheckpoint(filepath=weightname,
+                             ModelCheckpoint(filepath=weight_id,
                                              monitor='loss',
                                              save_best_only=True)]
             else:
-                callbacks = [ModelCheckpoint(filepath = weightname,
-                                             monitor = 'loss',
-                                             save_best_only = True)]
-            x, x_noisy = self.add_noise(x)
-
-            self.Model.compile(
-                loss = loss, optimizer = optimizer
-            )
+                callbacks = [ModelCheckpoint(filepath=weight_id,
+                                             monitor='loss',
+                                             save_best_only=True)]
             self.Model.fit(
                 x_noisy, x,
-                batch_size = batch_size,
-                epochs = pretrain_epochs, callbacks = callbacks
+                batch_size=batch_size,
+                epochs=pretrain_epochs,
+                callbacks=callbacks, verbose=verbose
             )
 
-            self.Model.save_weights("weights/" + weightname + "-" +
-                                    str(pretrain_epochs) +
-                                    "-ae_weights.h5")
+            self.Model.save_weights(weight_id)
         else:
             self.Model.load_weights(weights)
 
+ x,y, y_names = data.load_fashion()
+ 
+ n_clusters = 10
+ 
+ model = n2d.n2d(x.shape[-1], manifold_learner=n2d.UmapGMM(n_clusters),
+                 autoencoder = denoisingAutoEncoder, ae_dim = n_clusters,
+                 ae_args={'noise_factor': 0.5})
+ 
+ model.fit(x, weights="weights/fashion_denoise-1000-ae_weights.h5")
+ 
+ denoising_preds = model.predict(x)
 
-
-n_clusters = 10
-
-model = n2d.n2d(x, manifoldLearner=n2d.UmapGMM(n_clusters),
-	autoencoder = denoisingAutoEncoder, 
-	ndim = n_clusters, ae_args={'noise_factor': 0.5})
-
-model.fit(weight_id="fashion_denoise")
-
-model.predict()
-
-model.visualize(y, y_names, savePath = "viz/fashion_denoise", nclust = n_clusters)
-print(model.assess(y))
 ```
 
 Lets talk about the ingredients we need for modification:
