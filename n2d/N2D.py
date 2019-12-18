@@ -222,7 +222,7 @@ def plot(x, y, plot_id, names=None, n_clusters=10):
     plt.ylabel("")
     plt.xlabel("")
     plt.tight_layout()
-    plt.title(plot_id, pad=50)
+    plt.title(plot_id, pad=40)
 
 
 class n2d:
@@ -267,7 +267,6 @@ class n2d:
                  ae_args={"act": "relu"},
                  ):
 
-        # FIGURE THIS OUT!! WHERE DOES X GO??
 
         self.autoencoder = autoencoder(input_dim=input_dim,
                                        output_dim=ae_dim,

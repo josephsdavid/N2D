@@ -88,7 +88,7 @@ Next, we need to initialize the N2D object. This requires three arguments: the n
         
         n_clusters = 6
         manifoldGMM = n2d.UmapGMM(n_clusters)
-        harcluster = n2d.n2d(x, manifoldGMM, ndim = n_clusters)
+        harcluster = n2d.n2d(x.shape[-1], manifoldGMM, ae_dim = n_clusters)
 
 
 
@@ -112,38 +112,38 @@ This initializes the hybrid manifold learner/clustering arguments. In general, U
         * - Argument
           - Default
           - Description
-        * - nclust
+        * - n_clusters
           - no default
           - The number of clusters
-        * - umapdim
+        * - umap_dim
           - 2
           - Number of dimensions of the manifold.
-        * - umapN
+        * - umap_neighbors
           - 10
           - Number of nearest neighbors to consider for UMAP. Defaults to 10, to recreate cutting edge results shown in the paper, however often 20 is a better value 
-        * - umapMd
+        * - umap_min_distance
           - float(0)
           - Minimum distance between points within the manifold. Smaller numbers get tighter, better clusters while larger numbers are better for visualization
-        * - umapMetric
+        * - umap_metric
           - 'euclidean'
           - The distance metric to use for UMAP.
         * - random_state
           - 0
           - The random seed
 
-For our use case, there are two main tunables: **umapdim**, and **umapN**. **umapdim** is the number of dimensions you wish to project the autoencoded embedding in. In general, values between **2** and **the number of clusters** are acceptable. It is best to start at 2 (the default value) and then go up from there. All of the breakthrough results in the paper were done with umapdim =2.  **umapN** is the number of nearest neighbors UMAP will use when constructing its KNN graph. In the case of N2D, this should be a small value, as we want to learn the **local manifold**. The default value for umapN is **10**, as it will allow you to reproduce the results in the paper, however umapN = **20** sometimes performs slightly better, *especially if the autoencoder loss is high*. Since umapGMM takes just a few seconds to run, it is worth it to tune these two values in general.
+For our use case, there are two main tunables: **umap_dim**, and **umap_neighbors**. **umap_dim** is the number of dimensions you wish to project the autoencoded embedding in. In general, values between **2** and **the number of clusters** are acceptable. It is best to start at 2 (the default value) and then go up from there. All of the breakthrough results in the paper were done with umap_dim =2.  **umap_neighbors** is the number of nearest neighbors UMAP will use when constructing its KNN graph. In the case of N2D, this should be a small value, as we want to learn the **local manifold**. The default value for umap_neighbors is **10**, as it will allow you to reproduce the results in the paper, however umap_neighbors = **20** sometimes performs slightly better, *especially if the autoencoder loss is high*. Since umapGMM takes just a few seconds to run, it is worth it to tune these two values in general.
 
 Initializing N2D
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 Next, we initialize the **n2d** object. Upon initialization, the autoencoder is built, and the clustering mechanisms are all set into place for easy prediction. By default, the encoder takes on a structure (dimensions of data, 500, 500, 2000, ndim), while the decoder takes on the mirror of that structure. To alter the structure, we can adjust the architecture component when we initialize. ::
         
-        harcluster_new_arch = n2d.n2d(x, manifoldGMM, ndim = n_clusters, architecture = [500, 2000, 500, 100])
+        harcluster_new_arch = n2d.n2d(x.shape[-1], manifoldGMM, ae_dim = n_clusters, architecture = [500, 2000, 500, 100])
 
 
 In this case, the encoder part of the autoencoder would have structure (dimensions of data, 500, 2000, 500, 100, ndim). Please note that the autoencoder design defaults are sane, based on academic research, and produce excellent results, so the architecture does not require a lot of change in general. 
 
 **Important Note**
-In general, it is a good idea to say that **ndim = n_clusters**, that is to say we want to reduce our data's dimensionality from whatever space it lies in to the same number of dimensions as we have clusters. However, it is important to think critically! If you have data with 5000+ features, and want to put it into 2 or 3 groups, you probably should not set ndim to be 2 or 3. That is expecting a ridiculous amount of your computer!!
+In general, it is a good idea to say that **ae_dim = n_clusters**, that is to say we want to reduce our data's dimensionality from whatever space it lies in to the same number of dimensions as we have clusters. However, it is important to think critically! If you have data with 5000+ features, and want to put it into 2 or 3 groups, you probably should not set ndim to be 2 or 3. That is expecting a ridiculous amount of your computer!!
 You are in essence learning a function that will map any 5000 dimensional observation into 2 or 3 numbers. Intuitively, this is unrealistic. This will lead to a model which gets stuck after 150 epochs, and when you tell your colleagues about your issues you will get some very funny  looks!
 
 Lets talk about the default arguments for the n2d initialization method:
@@ -156,10 +156,10 @@ Lets talk about the default arguments for the n2d initialization method:
         * - Argument
           - Default
           - Description
-        * - x
+        * - input_dim
           - no default
-          - The data
-        * - manifoldLearner
+          - The data's dimensions, typically data.shape[-1]
+        * - manifold_learner
           - no default, best to use UmapGMM
           - The manifold learning and clustering mechanism
         * - autoencoder
@@ -168,7 +168,7 @@ Lets talk about the default arguments for the n2d initialization method:
         * - architecture
           - [500, 500, 2000]
           - The layout of the hidden layers in the network, presented in list form
-        * - ndim
+        * - ae_dim
           - 10
           - Number of dimensions you wish to represent the data in with the autoencoder
         * - ae_args
@@ -184,7 +184,7 @@ Learning an Embedding
 Next, we need to train the autoencoder to learn the embedding. This step is pretty easy. As this is our first run of the autoencoder, the only thing we need to input is the name we would like the weights to be stored under, as well as create a weights directory. ::
         
 
-        harcluster.fit(weight_id = "weights/har-1000-ae_weights.h5")
+        harcluster.fit(x, weight_id = "weights/har-1000-ae_weights.h5")
 
 This will train the autoencoder, and store the weights in **weights/[WEIGHT_ID]-[NUM_EPOCHS]-ae_weights.h5**. The arguments to the preTrainEncoder method are shown in the table below:
 
@@ -224,22 +224,31 @@ Please note the patience parameter! It can save lots of time. A generally sane v
 
 On our next round of the autoencoder, while we fiddle with clustering algorithms, visualizations, or whatever, we can use the preTrainEncoder method to load in our weights as follows. ::
         
-        harcluster.fit(weights = "weights/har-1000-ae_weights.h5")
+        harcluster.fit(x, weights = "weights/har-1000-ae_weights.h5")
 
 
 
 
 Finally, we can actually cluster the data! To do this, we pass the clustering mechanism into the N2D predict method. ::
         
-        preds = harcluster.predict()
+        preds = harcluster.predict(x)
 
-By default, the dataset that was fit is clustered. To predict on new data please use the *.transform* method.
-
-This clusters the data and stores the predictions in ::
+This will save the prediction internally and externally (for visualization convenience).
+The prediction is internally stored in ::
 
         harcluster.preds
 
 for your convenience if you want to access the predictions in functions that take in n2d objects.
+
+
+fit_predict
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We can wrap these two commands into one using the fit_predict method, which takes the same arguments as fit::
+        
+        harcluster.fit_predict(x, weight_id = "weights/har-1000-ae_weights.h5")
+
+
 
 Assessing and Visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -256,7 +265,7 @@ To visualize, we again have a built in method as well as tools for creating your
 
 **Built in**::
 
-        harcluster.visualize(y, y_names, nclust = n_clusters)
+        harcluster.visualize(y, y_names, n_clusters = n_clusters)
         plt.show()
 
 **Custom** :
@@ -287,12 +296,13 @@ These are the predicted clusters, now lets look at the real groupings!
 
 Looks like we did a pretty good job!! One very interesting thing to note, is even though it got some things wrong, where it got them wrong is still useful. The stationary activities are all near each other, while the active activities are all together. N2D, with no features and labels, not only found useful clusters, but ones that provide real world intuition! This is a very powerful result.
 
-The '.transform' Method
+Predicting on new data
 ---------------------------------
 
-Once the weights have been initialized, we can use an N2D object in a fully online manner, as it is unsupervised learning. This means, if we have some new data, **x_new**, we can just predict using that ::
-
-        new_preds = harcluster.transform(x_new)
+Once the everything has been fitted, we can easily make fast predictions on new data::
+        
+        x_test, y_test = data.load_mnist_test()
+        new_preds = harcluster.predict(x_test)
 
 
 This will use the autoencoder to map the data into the proper number of dimensions, and then transform it to the manifold learned during fitting, and finally cluster it using the trained clustering mechanism. 

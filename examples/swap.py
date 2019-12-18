@@ -2,6 +2,7 @@ import n2d
 import numpy as np
 from sklearn.cluster import KMeans
 import umap
+import matplotlib.pyplot as plt
 
 from n2d import datasets as data
 
@@ -61,3 +62,4 @@ kmclust.fit(x, weights="weights/har-1000-ae_weights.h5")
 kmclust.predict(x)
 print(kmclust.assess(y))
 kmclust.visualize(y, None, 6)
+plt.show()
