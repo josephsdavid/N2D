@@ -66,7 +66,7 @@ Lets assume for our use case, k means will work very well. Now lets write a k me
                 y_pred = self.cluster_manifold.predict(self.hle)
                 return(np.asarray(y_pred))
 
-And there you go! We have made a class that N2D can take in once initialized, and are ready for action. Note that spectral clustering does not have anything like transform or predict_proba, so we cannot write a transform method. However, we are still ready for action! :: 
+And there you go! We have made a class that N2D can take in once initialized, and are ready for action. :: 
         
         import n2d
         from n2d import datasets as data
