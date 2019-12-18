@@ -331,6 +331,7 @@ This will design the networks to be [input dimensions, 500, 500, 2000, output di
 - [x] Find an elegant way to deal with pre training weights
 - [ ] Package on Nix
 - [ ] Blog post?
+- [ ] Clean up code examples!
 
 # Contributing
 
