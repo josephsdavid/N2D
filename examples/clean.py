@@ -23,7 +23,7 @@ manifoldGMM = n2d.UmapGMM(n_clusters, umap_neighbors=10)
 mnistcluster = n2d.n2d(x.shape[-1], manifoldGMM, n_clusters)
 
 # fit
-mnistcluster.fit(x, weights="weights/mnist-1000-ae_weights.h5", patience=None)
+mnistcluster.fit(x, weights="examples/weights/mnist-1000-ae_weights.h5", patience=None)
 preds_0 = mnistcluster.predict(x)
 
 # fit_predict
