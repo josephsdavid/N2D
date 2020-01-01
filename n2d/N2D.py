@@ -92,28 +92,46 @@ class AutoEncoder:
             if not None, the early stopping criterion
             """
 
-        if weights is None:
+        if weights is None: # if there are no weights to load for the encoder, make encoder
             self.Model.compile(
                 loss=loss, optimizer=optimizer
             )
-            if patience is not None:
-                callbacks = [EarlyStopping(monitor='loss', patience=patience),
-                             ModelCheckpoint(filepath=weight_id,
-                                             monitor='loss',
-                                             save_best_only=True)]
-            else:
-                callbacks = [ModelCheckpoint(filepath=weight_id,
-                                             monitor='loss',
-                                             save_best_only=True)]
-            self.Model.fit(
-                x, x,
-                batch_size=batch_size,
-                epochs=pretrain_epochs,
-                callbacks=callbacks, verbose=verbose
-            )
 
-            self.Model.save_weights(weight_id)
-        else:
+            if weight_id is not None: # if we are going to save the weights somewhere
+                if patience is not None: #if we are going to do early stopping
+                    callbacks = [EarlyStopping(monitor='loss', patience=patience),
+                                 ModelCheckpoint(filepath=weight_id,
+                                                 monitor='loss',
+                                                 save_best_only=True)]
+                else:
+                    callbacks = [ModelCheckpoint(filepath=weight_id,
+                                                 monitor='loss',
+                                                 save_best_only=True)]
+                # fit the model with the callbacks
+                self.Model.fit(
+                    x, x,
+                    batch_size=batch_size,
+                    epochs=pretrain_epochs,
+                    callbacks=callbacks, verbose=verbose
+                )
+                self.Model.save_weights(weight_id)
+            else: # if we are not saving weights
+                if patience is not None:
+                    callbacks = [EarlyStopping(monitor='loss', patience=patience)]
+                    self.Model.fit(
+                        x, x,
+                        batch_size=batch_size,
+                        epochs=pretrain_epochs,
+                        callbacks=callbacks, verbose=verbose
+                    )
+                else:
+                    self.Model.fit(
+                        x,x,
+                        batch_size=batch_size,
+                        epochs=pretrain_epochs,
+                        verbose=verbose
+                    )
+        else: # otherwise load weights
             self.Model.load_weights(weights)
 
 
@@ -279,7 +297,7 @@ class n2d:
 
     def fit(self, x, batch_size=256, pretrain_epochs=1000,
             loss='mse', optimizer='adam', weights=None,
-            verbose=1, weight_id='generic_autoencoder',
+            verbose=1, weight_id=None,
             patience=None):
         """fit: train the autoencoder.
 
