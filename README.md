@@ -1,5 +1,9 @@
 [![Documentation Status](https://readthedocs.org/projects/n2d/badge/?version=latest)](https://n2d.readthedocs.io/en/latest/?badge=latest)
 
+# Coming soon
+
+* Optional weight saving!
+* Save N2D models to h5 files for easy deployment
 
 # Changes
 
