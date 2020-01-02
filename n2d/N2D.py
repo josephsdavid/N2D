@@ -397,10 +397,35 @@ class n2d:
 
 
 def save_n2d(obj, encoder_id, manifold_id):
+    '''
+    save_n2d: save n2d objects
+    --------------------------
+
+    description: Saves the encoder to an h5 file and the manifold learner/clusterer
+    to a pickle.
+
+    parameters:
+
+        - obj: the fitted n2d object
+        - encoder_id: what to save the encoder as
+        - manifold_id: what to save the manifold learner as
+    '''
     obj.encoder.save(encoder_id)
     pickle.dump(obj.manifold_learner, open(manifold_id, 'wb'))
 
 def load_n2d(encoder_id, manifold_id): # loaded models can only predict currently
+    '''
+    load_n2d: load n2d objects
+    --------------------------
+
+    description: loads fitted n2d objects from files. Note you CANNOT train
+    these objects further, the only method which will perform correctly is `.predict`
+
+    parameters:
+
+        - encoder_id: where the encoder is stored
+        - manifold_id: where the manifold learner/clusterer is stored
+    '''
     man = pickle.load(open(manifold_id, 'rb'))
     out = n2d(10, man)
     out.encoder = load_model(encoder_id, compile = False)
