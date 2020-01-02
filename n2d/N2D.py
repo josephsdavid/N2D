@@ -7,8 +7,9 @@ import umap
 from keras import backend as K
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import Dense, Input
-from keras.models import Model
+from keras.models import Model, load_model
 from sklearn import metrics, mixture
+import pickle
 
 from . import linear_assignment as la
 
@@ -59,7 +60,7 @@ class AutoEncoder:
 
     def fit(self, x, batch_size=256, pretrain_epochs=1000,
             loss='mse', optimizer='adam', weights=None,
-            verbose=0, weight_id='fashion', patience=None):
+            verbose=0, weight_id=None, patience=None):
         """fit: train the autoencoder.
 
             Parameters:
@@ -391,3 +392,16 @@ class n2d:
         plot(hle, y, 'n2d', names,  n_clusters=n_clusters)
         y_pred_viz, _, _ = best_cluster_fit(y, y_pred)
         plot(hle, y_pred_viz, 'n2d-predicted', names,  n_clusters=n_clusters)
+
+
+
+
+def save_n2d(obj, encoder_id, manifold_id):
+    obj.encoder.save(encoder_id)
+    pickle.dump(obj.manifold_learner, open(manifold_id, 'wb'))
+
+def load_n2d(encoder_id, manifold_id): # loaded models can only predict currently
+    man = pickle.load(open(manifold_id, 'rb'))
+    out = n2d(10, man)
+    out.encoder = load_model(encoder_id, compile = False)
+    return(out)

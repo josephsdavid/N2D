@@ -19,11 +19,12 @@ np.random.seed(0)
 x, y = data.load_mnist()
 
 n_clusters = 10
+
 manifoldGMM = n2d.UmapGMM(n_clusters, umap_neighbors=10)
 mnistcluster = n2d.n2d(x.shape[-1], manifoldGMM, n_clusters)
 
 # fit
-mnistcluster.fit(x, weights="examples/weights/mnist-1000-ae_weights.h5", patience=None)
+mnistcluster.fit(x, weights="weights/mnist-1000-ae_weights.h5", patience=None)
 preds_0 = mnistcluster.predict(x)
 
 # fit_predict
@@ -36,11 +37,17 @@ plt.show()
 mnistcluster.assess(y)
 
 
-def ok(x):
-    return x
 
 # predict
 x_test, y_test = data.load_mnist_test()
 
 preds_2 = mnistcluster.predict(x_test)
 mnistcluster.assess(y_test)
+
+
+manifoldGMM2 = n2d.UmapGMM(n_clusters, umap_neighbors=10)
+mnistcluster2 = n2d.n2d(x.shape[-1], manifoldGMM2, n_clusters)
+
+mnistcluster2.fit(x, pretrain_epochs=10)
+
+n2d.save_n2d(mnistcluster2, 'test_ae.h5', 'test_man.sav')
