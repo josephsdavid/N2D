@@ -6,12 +6,6 @@ Welcome to the stable master branch of N2D!! The active development branch is on
 
 * [Model saving and loading!](https://n2d.readthedocs.io/en/latest/quickstart.html#saving-and-loading)
 
-* Easily extensible autoencoders!
-
-* Sklearn-like API. Please note this is a major update, and if you are using a previous version you will have to change your code, as the API has changed!
-
-* Even more sklearn like with standard fit, fit_predict, and predict methods 
-
 
 # Not Too Deep Clustering
 
