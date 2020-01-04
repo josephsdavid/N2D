@@ -1,5 +1,7 @@
 [![Documentation Status](https://readthedocs.org/projects/n2d/badge/?version=latest)](https://n2d.readthedocs.io/en/latest/?badge=latest)
 
+Welcome to the stable version of N2D! Only working updates are allowed here!
+
 # Coming soon
 
 * Optional weight saving!
