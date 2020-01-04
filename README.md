@@ -1,6 +1,6 @@
 [![Documentation Status](https://readthedocs.org/projects/n2d/badge/?version=latest)](https://n2d.readthedocs.io/en/latest/?badge=latest)
 
-Welcome to the development branch of N2D!! The stable branch is on master
+Welcome to the stable master branch of N2D!! The active development branch is on [dev](https://github.com/josephsdavid/N2D/tree/dev), if you are contributing, please make branches from that!
 
 # Changes
 
