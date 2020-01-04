@@ -209,13 +209,13 @@ This will train the autoencoder, and store the weights in **weights/[WEIGHT_ID]-
           - The optimizier
         * - weights
           - None
-          - The name of the weight file
+          - The name of the weight file. If None, the model will be trained
         * - verbose
           - 0
           - The verbosity of the training
         * - weight_id
-          - 'generic_autoencoder'
-          - The name of the autoencoder used to identify the weights
+          - None
+          - if None, the encoder weights will not be saved. If string, it will save the weights to that file path
         * - patience
           - None
           - int or None. If None, nothing special happens, if int, the tolerance for early stopping
@@ -247,8 +247,6 @@ fit_predict
 We can wrap these two commands into one using the fit_predict method, which takes the same arguments as fit::
         
         harcluster.fit_predict(x, weight_id = "weights/har-1000-ae_weights.h5")
-
-
 
 Assessing and Visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -306,4 +304,19 @@ Once the everything has been fitted, we can easily make fast predictions on new 
 
 
 This will use the autoencoder to map the data into the proper number of dimensions, and then transform it to the manifold learned during fitting, and finally cluster it using the trained clustering mechanism. 
+
+
+
+Saving and Loading
+-----------------------------------
+
+N2D models can be saved for deployment with the **save_n2d** and the **load_n2d** functions. Currently, this is managed by saving the **encoder** to an h5 file, and pickling the **manifold clusterer**. This is an open option area for development, ideally the whole model will be serialized in an h5 file. If you wish to contribute, please see the `issue <https://github.com/josephsdavid/N2D/issues/5>`_. To save an n2d model, follow the following procedure::
+
+        n2d.save_n2d(harcluster, encoder_id='models/har.h5', manifold_id='models/hargmm.sav')
+
+to load, we follow a similar mechanism:::
+
+        hcluster = n2d.load_n2d('models/har.h5', 'models/hargmm.sav')
+
+Please note that **for rapid development and experimentation** you should use the **weight saving** in the *.fit* method, as that is its intended use. You can train the network and then fiddle around with the rest of the model. This means that **save_n2d** and **load_n2d** should **only be used for deploying the model**.
 

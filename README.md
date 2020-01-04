@@ -1,5 +1,6 @@
 [![Documentation Status](https://readthedocs.org/projects/n2d/badge/?version=latest)](https://n2d.readthedocs.io/en/latest/?badge=latest)
 
+Welcome to the development branch of N2D!! The stable branch is on master
 
 # Changes
 

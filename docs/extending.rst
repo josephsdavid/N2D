@@ -159,30 +159,48 @@ This is slightly more involved, but still pretty easy! The autoencoder needs to 
                              verbose = 0, weight_id = 'fashion', patience = None):
         
                 x, x_noisy = self.add_noise(x)
-                if weights is None:
+
+                if weights is None: # if there are no weights to load for the encoder, make encoder
                     self.Model.compile(
                         loss=loss, optimizer=optimizer
                     )
-                    if patience is not None:
-                        callbacks = [EarlyStopping(monitor='loss', patience=patience),
-                                     ModelCheckpoint(filepath=weight_id,
-                                                     monitor='loss',
-                                                     save_best_only=True)]
-                    else:
-                        callbacks = [ModelCheckpoint(filepath=weight_id,
-                                                     monitor='loss',
-                                                     save_best_only=True)]
-                    self.Model.fit(
-                        x_noisy, x,
-                        batch_size=batch_size,
-                        epochs=pretrain_epochs,
-                        callbacks=callbacks, verbose=verbose
-                    )
-        
-                    self.Model.save_weights(weight_id)
-                else:
-                    self.Model.load_weights(weights)
 
+                    if weight_id is not None: # if we are going to save the weights somewhere
+                        if patience is not None: #if we are going to do early stopping
+                            callbacks = [EarlyStopping(monitor='loss', patience=patience),
+                                         ModelCheckpoint(filepath=weight_id,
+                                                         monitor='loss',
+                                                         save_best_only=True)]
+                        else:
+                            callbacks = [ModelCheckpoint(filepath=weight_id,
+                                                         monitor='loss',
+                                                         save_best_only=True)]
+                        # fit the model with the callbacks
+                        self.Model.fit(
+                            x_noisy, x,
+                            batch_size=batch_size,
+                            epochs=pretrain_epochs,
+                            callbacks=callbacks, verbose=verbose
+                        )
+                        self.Model.save_weights(weight_id)
+                    else: # if we are not saving weights
+                        if patience is not None:
+                            callbacks = [EarlyStopping(monitor='loss', patience=patience)]
+                            self.Model.fit(
+                                x_noisy, x,
+                                batch_size=batch_size,
+                                epochs=pretrain_epochs,
+                                callbacks=callbacks, verbose=verbose
+                            )
+                        else:
+                            self.Model.fit(
+                                x_noisy, x,
+                                batch_size=batch_size,
+                                epochs=pretrain_epochs,
+                                verbose=verbose
+                            )
+                else: # otherwise load weights
+                    self.Model.load_weights(weights)
 Again, this code is big, but basically the new class you define needs to build the autoencoder in the __init__ method, it needs to save the encoder network as self.encoder, and it needs to have a predict method. Extra arguments can be put at the end, as they will go into the *ae_args* dict
 
 
