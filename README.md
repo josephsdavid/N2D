@@ -6,7 +6,7 @@ Welcome to the stable master branch of N2D!! The active development branch is on
 
 * [Model saving and loading!](https://n2d.readthedocs.io/en/latest/quickstart.html#saving-and-loading)
 [x] TF2 ready
-[ ] Wrapper classes to extend
+[ ] Wrapper classes to extend manifold learning and autoencoder
 
 
 
