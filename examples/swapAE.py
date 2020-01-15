@@ -1,22 +1,19 @@
-import os
 import n2d
 from n2d import datasets as data
-import random as rn
-import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras.layers import Dense, Input
+from tensorflow.keras.models import Model
 import seaborn as sns
-plt.style.use(['seaborn-white', 'seaborn-paper'])
-sns.set_context("paper", font_scale=1.3)
-import tensorflow as tf
-from keras import backend as K
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-
-import tensorflow as tf
+import os
 import sys
 import umap
-from keras.layers import Dense, Input
-from keras.models import Model
+import random as rn
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+plt.style.use(['seaborn-white', 'seaborn-paper'])
+sns.set_context("paper", font_scale=1.3)
 
 x,y, y_names = data.load_fashion()
 

@@ -53,7 +53,6 @@ sns.set_context("paper", font_scale=1.3)
 matplotlib.use('agg')
 
 import tensorflow as tf
-from keras import backend as K
 
 # set up environment
 os.environ['PYTHONHASHSEED'] = '0'
@@ -215,14 +214,14 @@ plt.style.use(['seaborn-white', 'seaborn-paper'])
 sns.set_context("paper", font_scale=1.3)
 matplotlib.use('agg')
 import tensorflow as tf
-from keras import backend as K
 import sys
-from keras.layers import Dense, Input
-from keras.models import Model
+from tensorflow.keras.layers import Dense, Input
+from tensorflow.keras.models import Model
+
 
 x,y, y_names = data.load_fashion()
 
-
+# we decide to use this for some strange reason
 class denoisingAutoEncoder:
     def __init__(self, input_dim, output_dim, architecture, noise_factor = 0.5, act='relu'):
         self.noise_factor = noise_factor

@@ -1,5 +1,10 @@
 let
-  pkgs = import <nixpkgs> {};
+
+  pkgs = import (
+    builtins.fetchGit {
+      name = "nixos-tensorflow-2";
+      url = https://github.com/nixos/nixpkgs;
+      ref = "d59b4d07045418bae85a9bdbfdb86d60bc1640bc";}) {};
 
   transforms3d = pkgs.callPackage ./nix/transforms3d.nix {
     buildPythonPackage = pkgs.python37.pkgs.buildPythonPackage;

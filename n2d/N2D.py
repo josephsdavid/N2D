@@ -4,10 +4,9 @@ import pandas as pd
 import seaborn as sns
 import tensorflow as tf
 import umap
-from keras import backend as K
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.layers import Dense, Input
-from keras.models import Model, load_model
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras.layers import Dense, Input
+from tensorflow.keras.models import Model, load_model
 from sklearn import metrics, mixture
 import pickle
 

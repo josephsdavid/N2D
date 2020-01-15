@@ -105,13 +105,10 @@ This is slightly more involved, but still pretty easy! The autoencoder needs to 
         sns.set_context("paper", font_scale=1.3)
         matplotlib.use('agg')
         import tensorflow as tf
-        from keras import backend as k
-        
-        import tensorflow as tf
         import sys
         import umap
-        from keras.layers import dense, input
-        from keras.models import model
+        from tensorflow.keras.layers import Dense, Input
+        from tensorflow.keras.models import model
         
         x,y, y_names = data.load_fashion()
         
