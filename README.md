@@ -5,7 +5,9 @@ Welcome to the stable master branch of N2D!! The active development branch is on
 # Changes
 
 * [Model saving and loading!](https://n2d.readthedocs.io/en/latest/quickstart.html#saving-and-loading)
-- [*] TF2 ready
+[x] TF2 ready
+[ ] Wrapper classes to extend
+
 
 
 # Not Too Deep Clustering
