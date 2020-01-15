@@ -2,8 +2,8 @@ import os
 
 import numpy as np
 import pandas as pd
-from keras.datasets import fashion_mnist
-from keras.datasets import mnist
+from tensorflow.keras.datasets import fashion_mnist
+from tensorflow.keras.datasets import mnist
 
 
 def load_mnist():

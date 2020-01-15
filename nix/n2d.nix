@@ -2,14 +2,13 @@
 
     buildPythonPackage rec {
       pname = "n2d";
-      version = "0.2.4";
+      version = "0.2.5";
     
 
       src = ./..;
 
       buildInputs = [
         pythonSource.h5py
-        pythonSource.Keras
         pythonSource.tensorflow
         pythonSource.scipy
         pythonSource.numpy
@@ -22,7 +21,6 @@
       ];
       propogatedBuildInputs = [
         pythonSource.h5py
-        pythonSource.Keras
         pythonSource.tensorflow
         pythonSource.scipy
         pythonSource.numpy
