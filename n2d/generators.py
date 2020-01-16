@@ -30,6 +30,12 @@ class manifold_cluster_generator(N2D.UmapGMM):
             y_pred = self.cluster_manifold.fit_predict(self.hle)
             return(np.asarray(y_pred))
 
+    def predict_proba(self, hl):
+        if self.proba:
+            super().predict_proba(hl)
+        else:
+            print("Your clusterer cannot predict probabilities")
+
 
 class autoencoder_generator(N2D.AutoEncoder):
     def __init__(self, model_levels=(), x_lambda = lambda x: x):

@@ -6,7 +6,7 @@ let
 in
     buildPythonPackage rec {
       pname = "n2d";
-      version = "0.3.1";
+      version = "0.3.2";
 
     
       src = packs.nix-gitignore.gitignoreSource additionalIgnores ./..;

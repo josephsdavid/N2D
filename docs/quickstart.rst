@@ -243,6 +243,12 @@ We can wrap these two commands into one using the fit_predict method, which take
         
         harcluster.fit_predict(x, weight_id = "weights/har-1000-ae_weights.h5")
 
+predict_proba
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+If your clusterer has the method "predict_proba", you can also do that::
+
+        probs = harcluster.predict_proba(x)
+
 Assessing and Visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -294,7 +300,7 @@ Predicting on new data
 
 Once the everything has been fitted, we can easily make fast predictions on new data::
         
-        x_test, y_test = data.load_mnist_test()
+        x_test, y_test = some test set
         new_preds = harcluster.predict(x_test)
 
 

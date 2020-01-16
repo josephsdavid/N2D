@@ -195,6 +195,11 @@ class UmapGMM:
         y_pred = y_prob.argmax(1)
         return(np.asarray(y_pred))
 
+    def predict_proba(self, hl):
+        manifold = self.manifold_in_embedding.transform(hl)
+        y_prob = self.cluster_manifold.predict_proba(manifold)
+        return(np.asarray(y_prob))
+
     def fit_predict(self, hl):
         self.hle = self.manifold_in_embedding.fit_transform(hl)
         self.cluster_manifold.fit(self.hle)
@@ -285,6 +290,7 @@ class n2d:
         self.clusterer = self.manifold_learner.cluster_manifold
         self.manifolder = self.manifold_learner.manifold_in_embedding
         self.preds = None
+        self.probs = None
         self.hle = None
 
     def fit(self, x, batch_size=256, epochs=1000,
@@ -340,6 +346,12 @@ class n2d:
         self.preds = self.manifold_learner.predict(hl)
         self.hle = self.manifold_learner.hle
         return(self.preds)
+
+    def predict_proba(self, x):
+        hl = self.encoder.predict(x)
+        self.probs = self.manifold_learner.predict_proba(hl)
+        self.hle = self.manifold_learner.hle
+        return(self.probs)
 
     def fit_predict(self, x, batch_size=256, epochs=1000,
                     loss='mse', optimizer='adam', weights=None,
