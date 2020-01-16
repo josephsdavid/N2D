@@ -24,7 +24,7 @@ Objects created by **generators** can be passed directly into N2D, without needi
 
         x, y = data.load_mnist()
 
- First, we make our autoencoder, for now using the AutoEncoder class::
+First, we make our autoencoder, for now using the AutoEncoder class::
         
         ae = n2d.AutoEncoder(input_dim = x.shape[-1], latent_dim = 20) # chosen arbitrarily
 
