@@ -3,9 +3,8 @@ from tensorflow.keras.models import Model
 import numpy as np
 
 class manifold_cluster_generator(N2D.UmapGMM):
-    def __init__(self, manifold_class, manifold_args, cluster_class, cluster_args, predict_method = "default"):
+    def __init__(self, manifold_class, manifold_args, cluster_class, cluster_args):
         # cluster exceptions
-        self.predict_method = predict_method
         self.manifold_in_embedding = manifold_class(**manifold_args)
         self.cluster_manifold = cluster_class(**cluster_args)
         proba = getattr(self.cluster_manifold, "predict_proba", None)
@@ -16,17 +15,12 @@ class manifold_cluster_generator(N2D.UmapGMM):
         super().fit(hl)
 
     def predict(self, hl):
-        if self.predict_method == "hdbscan-labels":
-            return self.cluster_manifold.labels_
-        elif self.predict_method == "hdbscan-prob":
-            return self.cluster_manifold.probabilities_
+        if self.proba:
+            super().predict(hl)
         else:
-            if self.proba:
-                super().predict(hl)
-            else:
-                manifold = self.manifold_in_embedding.transform(hl)
-                y_pred = self.cluster_manifold.predict(manifold)
-                return(np.asarray(y_pred))
+            manifold = self.manifold_in_embedding.transform(hl)
+            y_pred = self.cluster_manifold.predict(manifold)
+            return(np.asarray(y_pred))
 
     def fit_predict(self, hl):
         if self.proba:
