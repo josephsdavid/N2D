@@ -25,7 +25,7 @@ Full documentation is available on [read the docs](https://n2d.readthedocs.io/en
 
 # Installation
 
-N2D is [available on pypi](https://pypi.org/project/n2d/)
+N2D is [available on pypi](https://pypi.org/project/n2d/). Note that if you want to run on GPU (you do!), ***you will want to install tensorflow with CUDA support as well***!
 
 ```sh
 pip install n2d

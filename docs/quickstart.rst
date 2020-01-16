@@ -10,7 +10,7 @@ N2D is on Pypi and readily installable ::
 
         pip install n2d
 
-
+Please note that if you want GPU support, **You will also need to install tensorflow with GPU support**
 
 Loading Data
 ----------------

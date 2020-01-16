@@ -15,6 +15,7 @@ let
   n2d = pkgs.callPackage ./nix/n2d.nix {
     buildPythonPackage = pkgs.python37.pkgs.buildPythonPackage;
     pythonSource = pkgs.python37Packages;
+    packs = pkgs;
     umapVar = umap;
   };
 
