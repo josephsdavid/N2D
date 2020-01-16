@@ -4,6 +4,7 @@ Welcome to the stable master branch of N2D!! The active development branch is on
 
 # Changes
 
+* Finally easily extensible (no more writing classes!)
 * [Model saving and loading!](https://n2d.readthedocs.io/en/latest/quickstart.html#saving-and-loading)
 - [*] TF2 ready
 
