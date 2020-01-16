@@ -69,6 +69,7 @@ Note that while our fitted n2d object has all the attributes of the clustering m
 
 However, hdbscan has a neat trick where we can make "approximate predictions". This is allowed! We can write a imple function to get the approximate predictions and make predictions on new data::
 
+
         x_test, y_test = data.load_mnist_test()
 
         # predict on new data with dbscan and not too deep clustering!
@@ -80,7 +81,7 @@ However, hdbscan has a neat trick where we can make "approximate predictions". T
 
         labs, probs = approx_predict(n2d_db, x_test)
 
- Next, lets look at swapping out the autoencoder!!
+Next, lets look at swapping out the autoencoder!!
 
 
 Changing the Autoencoder
