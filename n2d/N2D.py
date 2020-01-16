@@ -35,8 +35,9 @@ class AutoEncoder:
     act: string
         The activation function. Defaults to 'relu'
     """
-    def __init__(self, input_dim, output_dim, architecture, act='relu'):
+    def __init__(self, input_dim, output_dim, architecture = [500, 500, 2000], act='relu', x_lambda = lambda x: x):
         shape = [input_dim] + architecture + [output_dim]
+        sel.x_lambda = x_lambda
         self.dims = shape
         self.act = act
         self.x = Input(shape=(self.dims[0],), name='input')
@@ -57,9 +58,9 @@ class AutoEncoder:
         self.Model = Model(inputs=self.x, outputs=self.decoded)
         self.encoder = Model(inputs=self.x, outputs=self.encoder)
 
-    def fit(self, x, batch_size=256, pretrain_epochs=1000,
-            loss='mse', optimizer='adam', weights=None,
-            verbose=0, weight_id=None, patience=None):
+    def fit(self, x, batch_size, epochs,
+            loss, optimizer, weights,
+            verbose, weight_id, patience):
         """fit: train the autoencoder.
 
             Parameters:
@@ -70,7 +71,7 @@ class AutoEncoder:
             batch_size: int
             the batch size
 
-            pretrain_epochs: int
+            epochs: int
             number of epochs you wish to run.
 
             loss: string or function
@@ -109,9 +110,9 @@ class AutoEncoder:
                                                  save_best_only=True)]
                 # fit the model with the callbacks
                 self.Model.fit(
-                    x, x,
+                    x, self.x_lambda(x),
                     batch_size=batch_size,
-                    epochs=pretrain_epochs,
+                    epochs=epochs,
                     callbacks=callbacks, verbose=verbose
                 )
                 self.Model.save_weights(weight_id)
@@ -119,16 +120,16 @@ class AutoEncoder:
                 if patience is not None:
                     callbacks = [EarlyStopping(monitor='loss', patience=patience)]
                     self.Model.fit(
-                        x, x,
+                        x, self.x_lambda(x),
                         batch_size=batch_size,
-                        epochs=pretrain_epochs,
+                        epochs=epochs,
                         callbacks=callbacks, verbose=verbose
                     )
                 else:
                     self.Model.fit(
-                        x,x,
+                        x,self.x_lambda(x),
                         batch_size=batch_size,
-                        epochs=pretrain_epochs,
+                        epochs=epochs,
                         verbose=verbose
                     )
         else: # otherwise load weights
@@ -277,25 +278,16 @@ class n2d:
             setting the activation function to relu
     """
 
-    def __init__(self, input_dim,
-                 manifold_learner,
-                 ae_dim=10,
-                 autoencoder=AutoEncoder,
-                 architecture=[500, 500, 2000],
-                 ae_args={"act": "relu"},
-                 ):
-
-
-        self.autoencoder = autoencoder(input_dim=input_dim,
-                                       output_dim=ae_dim,
-                                       architecture=architecture,
-                                       **ae_args)
+    def __init__(self,  manifold_learner, autoencoder):
+        self.autoencoder = autoencoder
         self.manifold_learner = manifold_learner
         self.encoder = self.autoencoder.encoder
+        self.clusterer = self.manifold_learner.cluster_manifold
+        self.manifolder = self.manifold_learner.manifold_in_embedding
         self.preds = None
         self.hle = None
 
-    def fit(self, x, batch_size=256, pretrain_epochs=1000,
+    def fit(self, x, batch_size=256, epochs=1000,
             loss='mse', optimizer='adam', weights=None,
             verbose=1, weight_id=None,
             patience=None):
@@ -309,7 +301,7 @@ class n2d:
             batch_size: int
             the batch size
 
-            pretrain_epochs: int
+            epochs: int
             number of epochs you wish to run.
 
             loss: string or function
@@ -336,7 +328,7 @@ class n2d:
 
         self.autoencoder.fit(x=x,
                              batch_size=batch_size,
-                             pretrain_epochs=pretrain_epochs,
+                             epochs=epochs,
                              loss=loss,
                              optimizer=optimizer, weights=weights,
                              verbose=verbose, weight_id=weight_id, patience=patience)
@@ -349,14 +341,14 @@ class n2d:
         self.hle = self.manifold_learner.hle
         return(self.preds)
 
-    def fit_predict(self, x, batch_size=256, pretrain_epochs=1000,
+    def fit_predict(self, x, batch_size=256, epochs=1000,
                     loss='mse', optimizer='adam', weights=None,
-                    verbose=1, weight_id='generic_autoencoder',
+                    verbose=1, weight_id=None,
                     patience=None):
 
         self.autoencoder.fit(x=x,
                              batch_size=batch_size,
-                             pretrain_epochs=pretrain_epochs,
+                             epochs=epochs,
                              loss=loss,
                              optimizer=optimizer, weights=weights,
                              verbose=verbose, weight_id=weight_id, patience=patience)

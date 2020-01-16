@@ -12,7 +12,6 @@ sns.set_context("paper", font_scale=1.3)
 os.environ['PYTHONHASHSEED'] = '0'
 os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
 rn.seed(0)
-tf.set_random_seed(0)
 np.random.seed(0)
 
 
@@ -21,10 +20,11 @@ x, y = data.load_mnist()
 n_clusters = 10
 
 manifoldGMM = n2d.UmapGMM(n_clusters, umap_neighbors=10)
-mnistcluster = n2d.n2d(x.shape[-1], manifoldGMM, n_clusters)
+ae = n2d.AutoEncoder(x.shape[-1], n_clusters)
+mnistcluster = n2d.n2d(manifoldGMM, ae)
 
 # fit
-mnistcluster.fit(x, weights="weights/mnist-1000-ae_weights.h5", patience=None)
+mnistcluster.fit(x, weight_id="weights/mnist-1000-ae_weights.h5", patience=None)
 preds_0 = mnistcluster.predict(x)
 
 # fit_predict
