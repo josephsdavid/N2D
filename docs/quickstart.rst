@@ -57,7 +57,7 @@ In this example, we are going to use HAR. ::
 Building the model
 ---------------------
 
-To build an N2D model, we are going to need 2 pieces: an autoencoder, and a manifold clustering algorithm. Both are provided with the library thankfully! First, we will load up any libraries we want to use in this example:::
+To build an N2D model, we are going to need 2 pieces: an autoencoder, and a manifold clustering algorithm. Both are provided with the library thankfully! First, we will load up any libraries we want to use in this example::
 
         
       import n2d
@@ -79,7 +79,7 @@ The first step of any not too deep clustering procedure is the autoencoded embed
 The AutoEncoder Class
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-So lets go ahead and initialize the autoencoder. This again uses the N2D AutoEncoder class:::
+So lets go ahead and initialize the autoencoder. This again uses the N2D AutoEncoder class::
         
         n_clusters = 6
         latent_dim = n_clusters
@@ -88,7 +88,7 @@ So lets go ahead and initialize the autoencoder. This again uses the N2D AutoEnc
         
 
 
-In the simplest possible example, this is it! The Autoencoder class **requires** the input dimensions of the data, and the number of dimensions we would like to reduce that to (latent dimensions, embedding dimensions). We can also modify the internal architecture of the AutoEncoder with the **architecture** argument. By default, the shape of the **encoder** is *[input_dim, 500, 500, 2000, latent_dim]* and the shape of the **decoder** is *[latent_dim, 2000, 500, 500, input_dim]*, or the reverse of the encoder. The autoencoder consists of these two ends stacked together, giving a network with dimensions: *[input_dim, 500, 500, 2000, latent_dim, 2000, 500, 500, input_dim]*. The shape of the network in between the input and latent dimensions can be replaced with a list, for example if we wanted the first three layers of the encoder to be 2000 neurons, and the next 4000 we would say (expecting the decoder to be the reverse of this):::
+In the simplest possible example, this is it! The Autoencoder class **requires** the input dimensions of the data, and the number of dimensions we would like to reduce that to (latent dimensions, embedding dimensions). We can also modify the internal architecture of the AutoEncoder with the **architecture** argument. By default, the shape of the **encoder** is *[input_dim, 500, 500, 2000, latent_dim]* and the shape of the **decoder** is *[latent_dim, 2000, 500, 500, input_dim]*, or the reverse of the encoder. The autoencoder consists of these two ends stacked together, giving a network with dimensions: *[input_dim, 500, 500, 2000, latent_dim, 2000, 500, 500, input_dim]*. The shape of the network in between the input and latent dimensions can be replaced with a list, for example if we wanted the first three layers of the encoder to be 2000 neurons, and the next 4000 we would say (expecting the decoder to be the reverse of this)::
 
         ae_huge = n2d.Autoencoder(x.shaep[-1], latent_dim, architecture = [2000, 2000, 2000, 4000])
 
@@ -164,7 +164,7 @@ Finally, we are ready to get clustering!
 
 Initializing N2D
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-Next, we initialize the **n2d** object. We feed it first an autoencoder, and second a manifold clusterer:::
+Next, we initialize the **n2d** object. We feed it first an autoencoder, and second a manifold clusterer::
         
         harcluster = n2d.n2d(ae, manifoldGMM)
 
@@ -309,7 +309,7 @@ N2D models can be saved for deployment with the **save_n2d** and the **load_n2d*
 
         n2d.save_n2d(harcluster, encoder_id='models/har.h5', manifold_id='models/hargmm.sav')
 
-to load, we follow a similar mechanism:::
+to load, we follow a similar mechanism::
 
         hcluster = n2d.load_n2d('models/har.h5', 'models/hargmm.sav')
 
