@@ -21,7 +21,7 @@ n_clusters = 10
 
 manifoldGMM = n2d.UmapGMM(n_clusters, umap_neighbors=10)
 ae = n2d.AutoEncoder(x.shape[-1], n_clusters)
-mnistcluster = n2d.n2d(ae, manifoldGMM)
+mnistcluster = n2d.n2d(manifoldGMM, ae)
 
 # fit
 mnistcluster.fit(x, weight_id="weights/mnist-1000-ae_weights.h5", patience=None)

@@ -1,17 +1,16 @@
-import os
 import n2d
-import random as rn
 import numpy as np
 import n2d.datasets as data
 import hdbscan
 import umap
+
 
 # load up mnist example
 x,y = data.load_mnist()
 
 # autoencoder can be just passed normally, see the other examples for extending
 # it
-ae = n2d.AutoEncoder(input_dim=x.shape[-1], output_dim=20)
+ae = n2d.AutoEncoder(input_dim=x.shape[-1], latent_dim=40)
 
 # arguments for clusterer go in a dict
 hdbscan_args = {"min_samples":10,"min_cluster_size":500, 'prediction_data':True}
@@ -24,7 +23,7 @@ umap_args = {"metric":"euclidean", "n_components":2, "n_neighbors":30,"min_dist"
 db = n2d.manifold_cluster_generator(umap.UMAP, umap_args, hdbscan.HDBSCAN, hdbscan_args)
 
 # pass the manifold-cluster tool and the autoencoder into the n2d class
-db_clust = n2d.n2d(db, ae)
+db_clust = n2d.n2d(ae, db)
 
 # fit
 db_clust.fit(x, epochs = 10)
@@ -59,4 +58,5 @@ test_embedding - test_n2d_embedding
 test_labels, strengths = hdbscan.approximate_predict(db_clust.clusterer, db_clust.manifolder.transform(test_embedding))
 
 print(test_labels)
+
 print(strengths)

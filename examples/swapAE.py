@@ -44,7 +44,7 @@ outputs = Dense(input_dim)(decoded)
 denoising_ae = n2d.autoencoder_generator((inputs, encoded, outputs), x_lambda = lambda x: add_noise(x, 0.5))
 
 # define model
-model = n2d.n2d(umapgmm, denoising_ae)
+model = n2d.n2d(denousing_ae, umapgmm)
 
 # fit the model
 model.fit(x, epochs=10)

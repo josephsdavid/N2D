@@ -57,8 +57,8 @@ In this example, we are going to use HAR. ::
 Building the model
 ---------------------
 
+To build an N2D model, we are going to need 2 pieces: an autoencoder, and a manifold clustering algorithm. Both are provided with the library thankfully! First, we will load up any libraries we want to use in this example:::
 
-Next, we want to setup the model. In this example, we are going to use the defaults, so we can quickly get clustering! Later on, we will discuss extending and changing the inner workings of the algorithm (details such as architecture, autoencoder type, clustering mechanism, etc). Lets first import some libraries and again load in our data ::
         
       import n2d
       import matplotlib
@@ -67,16 +67,6 @@ Next, we want to setup the model. In this example, we are going to use the defau
       plt.style.use(['seaborn-white', 'seaborn-paper'])
       sns.set_context("paper", font_scale = 1.3)
       matplotlib.use('agg')
-
-      # for reproducibiliry
-      import os
-      os.environ['PYTHONHASHSEED'] = '0'
-      os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
-      import random as rn
-      rn.seed(0)
-      import tensorflow as tf
-      tf.set_random_seed(0)
-      import numpy as np
       np.random.seed(0)
 
       from n2d import datasets as data
@@ -84,18 +74,55 @@ Next, we want to setup the model. In this example, we are going to use the defau
       x, y, y_names = data.load_har()
 
 
-Next, we need to initialize the N2D object. This requires three arguments: the number of dimensions we would like to represent the data as, a manifold clustering mechanism, and the data (without labels). ::
+The first step of any not too deep clustering procedure is the autoencoded embedding. Therefore, we will initialize that first. We do this with the AutoEncoder class:
+
+The AutoEncoder Class
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+So lets go ahead and initialize the autoencoder. This again uses the N2D AutoEncoder class:::
         
         n_clusters = 6
-        manifoldGMM = n2d.UmapGMM(n_clusters)
-        harcluster = n2d.n2d(x.shape[-1], manifoldGMM, ae_dim = n_clusters)
+        latent_dim = n_clusters
+
+        ae = n2d.AutoEncoder(x.shape[-1], latent_dim)
+        
 
 
+In the simplest possible example, this is it! The Autoencoder class **requires** the input dimensions of the data, and the number of dimensions we would like to reduce that to (latent dimensions, embedding dimensions). We can also modify the internal architecture of the AutoEncoder with the **architecture** argument. By default, the shape of the **encoder** is *[input_dim, 500, 500, 2000, latent_dim]* and the shape of the **decoder** is *[latent_dim, 2000, 500, 500, input_dim]*, or the reverse of the encoder. The autoencoder consists of these two ends stacked together, giving a network with dimensions: *[input_dim, 500, 500, 2000, latent_dim, 2000, 500, 500, input_dim]*. The shape of the network in between the input and latent dimensions can be replaced with a list, for example if we wanted the first three layers of the encoder to be 2000 neurons, and the next 4000 we would say (expecting the decoder to be the reverse of this):::
 
-First, lets talk about **n2d.UmapGMM**. This is the main clustering and manifold learning tool in the whole library, and should be understood well.
+        ae_huge = n2d.Autoencoder(x.shaep[-1], latent_dim, architecture = [2000, 2000, 2000, 4000])
+
+We can also change the activation function of our hidden layers by specifying **act**. Below is a table of all the parameters for AutoEncoder:
+
+.. list-table:: n2d.AutoEncoder Arguments
+        :widths: 25 25 25
+        :header-rows: 1
+
+        * - Argument
+          - Default
+          - Description
+        * - input_dim
+          - no default
+          - The data's dimensions, typically data.shape[-1]
+        * - latent_dim
+          - 10
+          - Number of dimensions you wish to represent the data in with the autoencoder
+        * - architecture
+          - [500, 500, 2000]
+          - The layout of the hidden layers in the network, presented in list form
+        * - act
+          - 'relu'
+          - The activation function for the hidden layers of the network
+        * - x_lambda
+          - lambda x: x
+          - Function used to transform the inputs to the network, but hold the outputs constant
 
 
-Clustering the Embedded Manifold
+It is important to note that while we set the latent dimensions to be the same as the number of clusters, this is not a `hard and fast rule <https://github.com/rymc/n2d/issues/5#issuecomment-574688767>`_. Use your head and some sense when choosing dimensions!
+
+The next step in Not Too Deep clustering is to learn the manifold in the embedding and cluster that. In the original paper describing N2D, UMAP and Gaussian mixing performed the best, and therefore are implemented in the library. To do this, we use the UmapGMM class (replacing the autoencoder/manifold learner/clustering algorithm will be discussed in the next chapter).
+
+Clustering the Embedded Manifold: UmapGMM
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Lets talk a bit more about how we learn the manifold and cluster it!! This is done primarily with the UmapGMM object ::
@@ -133,47 +160,15 @@ This initializes the hybrid manifold learner/clustering arguments. In general, U
 
 For our use case, there are two main tunables: **umap_dim**, and **umap_neighbors**. **umap_dim** is the number of dimensions you wish to project the autoencoded embedding in. In general, values between **2** and **the number of clusters** are acceptable. It is best to start at 2 (the default value) and then go up from there. All of the breakthrough results in the paper were done with umap_dim =2.  **umap_neighbors** is the number of nearest neighbors UMAP will use when constructing its KNN graph. In the case of N2D, this should be a small value, as we want to learn the **local manifold**. The default value for umap_neighbors is **10**, as it will allow you to reproduce the results in the paper, however umap_neighbors = **20** sometimes performs slightly better, *especially if the autoencoder loss is high*. Since umapGMM takes just a few seconds to run, it is worth it to tune these two values in general.
 
+Finally, we are ready to get clustering!
+
 Initializing N2D
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-Next, we initialize the **n2d** object. Upon initialization, the autoencoder is built, and the clustering mechanisms are all set into place for easy prediction. By default, the encoder takes on a structure (dimensions of data, 500, 500, 2000, ndim), while the decoder takes on the mirror of that structure. To alter the structure, we can adjust the architecture component when we initialize. ::
+Next, we initialize the **n2d** object. We feed it first an autoencoder, and second a manifold clusterer:::
         
-        harcluster_new_arch = n2d.n2d(x.shape[-1], manifoldGMM, ae_dim = n_clusters, architecture = [500, 2000, 500, 100])
+        harcluster = n2d.n2d(ae, manifoldGMM)
 
-
-In this case, the encoder part of the autoencoder would have structure (dimensions of data, 500, 2000, 500, 100, ndim). Please note that the autoencoder design defaults are sane, based on academic research, and produce excellent results, so the architecture does not require a lot of change in general. 
-
-**Important Note**
-In general, it is a good idea to say that **ae_dim = n_clusters**, that is to say we want to reduce our data's dimensionality from whatever space it lies in to the same number of dimensions as we have clusters. However, it is important to think critically! If you have data with 5000+ features, and want to put it into 2 or 3 groups, you probably should not set ndim to be 2 or 3. That is expecting a ridiculous amount of your computer!!
-You are in essence learning a function that will map any 5000 dimensional observation into 2 or 3 numbers. Intuitively, this is unrealistic. This will lead to a model which gets stuck after 150 epochs, and when you tell your colleagues about your issues you will get some very funny  looks!
-
-Lets talk about the default arguments for the n2d initialization method:
-
-
-.. list-table:: n2d init Arguments
-        :widths: 25 25 25
-        :header-rows: 1
-
-        * - Argument
-          - Default
-          - Description
-        * - input_dim
-          - no default
-          - The data's dimensions, typically data.shape[-1]
-        * - manifold_learner
-          - no default, best to use UmapGMM
-          - The manifold learning and clustering mechanism
-        * - autoencoder
-          - the default N2D AutoEncoder class
-          - The class of autoencoder you wish to use. Note this argument is ust a class
-        * - architecture
-          - [500, 500, 2000]
-          - The layout of the hidden layers in the network, presented in list form
-        * - ae_dim
-          - 10
-          - Number of dimensions you wish to represent the data in with the autoencoder
-        * - ae_args
-          - {"act":"relu"}
-          - dictionary of extra arguments to pass into the autoencoder
+and that's it! Now we can fit and predict!
 
 
 
@@ -198,12 +193,12 @@ This will train the autoencoder, and store the weights in **weights/[WEIGHT_ID]-
         * - batch_size
           - 256
           - The batch size
-        * - pretrain_epochs
+        * - epochs
           - 1000
           - number of epochs
         * - loss
           - "mse"
-          - The loss function
+          - The loss function. Anything that tf.keras accepts will do.
         * - optimizer
           - "adam"
           - The optimizier
@@ -220,7 +215,7 @@ This will train the autoencoder, and store the weights in **weights/[WEIGHT_ID]-
           - None
           - int or None. If None, nothing special happens, if int, the tolerance for early stopping
 
-Please note the patience parameter! It can save lots of time. A generally sane value for patience is 5. If after 5 epochs, loss does not decrease, the model will automatically stop for you!
+Please note the patience parameter! It can save lots of time. Also please note, if you do not tell N2D where to save the model weights, it will not save them!!
 
 On our next round of the autoencoder, while we fiddle with clustering algorithms, visualizations, or whatever, we can use the preTrainEncoder method to load in our weights as follows. ::
         
@@ -238,7 +233,7 @@ The prediction is internally stored in ::
 
         harcluster.preds
 
-for your convenience if you want to access the predictions in functions that take in n2d objects.
+for your convenience if you want to access the predictions for plotting/further analysis
 
 
 fit_predict

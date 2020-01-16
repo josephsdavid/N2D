@@ -22,22 +22,22 @@ class AutoEncoder:
         The number of dimensions of your input
 
 
-    output_dim: int
+    latent_dim: int
         The number of dimensions which you wish to represent the data as.
 
     architecture: list
         The structure of the hidden architecture of the networks. for example,
         the n2d default is [500, 500, 2000],
         which means the encoder has the structure of:
-        [input_dim, 500, 500, 2000, output_dim], and the decoder has the structure of:
-        [output_dim, 2000, 500, 500, input dim]
+        [input_dim, 500, 500, 2000, latent_dim], and the decoder has the structure of:
+        [latent_dim, 2000, 500, 500, input dim]
 
     act: string
         The activation function. Defaults to 'relu'
     """
-    def __init__(self, input_dim, output_dim, architecture = [500, 500, 2000], act='relu', x_lambda = lambda x: x):
-        shape = [input_dim] + architecture + [output_dim]
-        sel.x_lambda = x_lambda
+    def __init__(self, input_dim, latent_dim, architecture = [500, 500, 2000], act='relu', x_lambda = lambda x: x):
+        shape = [input_dim] + architecture + [latent_dim]
+        self.x_lambda = x_lambda
         self.dims = shape
         self.act = act
         self.x = Input(shape=(self.dims[0],), name='input')
@@ -110,7 +110,7 @@ class AutoEncoder:
                                                  save_best_only=True)]
                 # fit the model with the callbacks
                 self.Model.fit(
-                    x, self.x_lambda(x),
+                    self.x_lambda(x), x,
                     batch_size=batch_size,
                     epochs=epochs,
                     callbacks=callbacks, verbose=verbose
@@ -120,14 +120,14 @@ class AutoEncoder:
                 if patience is not None:
                     callbacks = [EarlyStopping(monitor='loss', patience=patience)]
                     self.Model.fit(
-                        x, self.x_lambda(x),
+                        self.x_lambda(x), x,
                         batch_size=batch_size,
                         epochs=epochs,
                         callbacks=callbacks, verbose=verbose
                     )
                 else:
                     self.Model.fit(
-                        x,self.x_lambda(x),
+                        self.x_lambda(x), x,
                         batch_size=batch_size,
                         epochs=epochs,
                         verbose=verbose
@@ -278,7 +278,7 @@ class n2d:
             setting the activation function to relu
     """
 
-    def __init__(self,  manifold_learner, autoencoder):
+    def __init__(self,autoencoder, manifold_learner):
         self.autoencoder = autoencoder
         self.manifold_learner = manifold_learner
         self.encoder = self.autoencoder.encoder

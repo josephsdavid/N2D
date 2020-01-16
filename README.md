@@ -42,56 +42,51 @@ x,y, y_names = data.load_har()
 Next, lets set up our deep learning environment, as well as load in necessary libraries:
 
 ```python
-import os
-import random as rn
 import numpy as np
-
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 plt.style.use(['seaborn-white', 'seaborn-paper'])
 sns.set_context("paper", font_scale=1.3)
 matplotlib.use('agg')
-
-import tensorflow as tf
-
-# set up environment
-os.environ['PYTHONHASHSEED'] = '0'
-
-
-rn.seed(0)
-
-np.random.seed(0)
 ```
 
 Finally, we are ready to get clustering!
 
-First, we need to define the manifold learning and clustering algorithm which we will use to cluster the autoencoded embedding. In general, it is best to use UmapGMM, which in the paper gave the absolute best performance.
+The first step of any not too deep clustering algorithm is to use an autoencoder to learn an embedding, so that is what we will do!
 
 ```python
 import n2d as nd
+import n2d.datasets as data
 
-n_clusters = 6  #there are 6 classes in HAR
+x, y, y_names = data.load_har()
 
-manifoldGMM = n2d.UmapGMM(n_clusters) 
+n_clusters = 6
+ae = n2d.AutoEncoder(x.shape[-1], n_clusters)
 ```
 
-The next step in this framework is to initialize the n2d object, which builds an autoencoder network and gets everything ready for clustering:
+The next step in this framework is to initialize a manifold clustering algorithm, in general UmapGMM, which builds an autoencoder network and gets everything ready for clustering:
 
 ```python
-harcluster = n2d.n2d(x.shape[-1], manifoldGMM, ae_dim = n_clusters)
+manifold_clusterer = n2d.UmapGMM(n_clusters)
+```
+
+Finally, we pass both of these into the N2D class:
+
+```python
+harcluster = n2d.n2d(ae, manifold_clusterer)
 ```
 
 Next, we fit the data. In this step, the autoencoder is trained on the data, setting up weights.
 
 ```python
-harcluster.fit(x, weight_id = "har")
+harcluster.fit(x, weight_id = "har.h5")
 ```
 
 The next time we want to use this autoencoder, we will instead use the weights argument:
 
 ```python
-harcluster.fit(x, weights = "har-1000-ae_weights.h5")
+harcluster.fit(x, weights = "har.h5")
 ```
 
 Now we can make a prediction, as well as visualize and assess. In this step, the manifold learner learns the manifold for the data, which is then clustered. By default, it makes the prediction on the data stored internally, however you can specify a new `x` in order to make predictions on new data.
@@ -115,204 +110,137 @@ Actual clusters
 
 ## Extending
 
+This library comes with 2 special generator classes, which make it much easier to extend the library. For more in depth discussion, please see [the documentation](https://n2d.readthedocs.io/en/latest/)
+
 ### Replacing the manifold clustering mechanism
 
-So far, this framework only includes the method for manifold clustering which the authors of the paper deemed best, umap with gaussian mixture clustering. Lets say however we want to try out K means instead
+Lets assume we want to use hdbscan to cluster our manifold, instead of gaussian mixing. In this case, we use the `manifold_cluster_generator` class. Below is a short example using hdbscan
+
 
 ```python
 import n2d
 import numpy as np
-from sklearn.cluster import KMeans
+import n2d.datasets as data
+import hdbscan
 import umap
 
-from n2d import datasets as data
 
-x, y, y_names = data.load_har()
+# load up mnist example
+x,y = data.load_mnist()
 
-class UmapKmeans:
-    # you can pass whatever parameters you need to here
-    def __init__(self, n_clusters,
-                 umap_dim=2,
-                 umap_neighbors=10,
-                 umap_min_distance=float(0),
-                 umap_metric='euclidean',
-                 random_state=0
-                 ):
-        # This parameter is not necessary but i find it useful 
-        self.n_clusters = n_clusters
-        
-        # this is how I generally structure this code, easy to modify
-        self.manifold_in_embedding = umap.UMAP(
-            random_state=random_state,
-            metric=umap_metric,
-            n_components=umap_dim,
-            n_neighbors=umap_neighbors,
-            min_dist=umap_min_distance
-        )
+# autoencoder can be just passed normally, see the other examples for extending
+# it
+ae = n2d.AutoEncoder(input_dim=x.shape[-1], latent_dim=40)
 
-        self.cluster_manifold = KMeans(
-            n_clusters=n_clusters,
-            random_state=random_state,
-            n_jobs=-1
-        )
-        self.hle = None
-    
-    # fit method takes in one argument, the embedding! important
-    def fit(self, hl):
-        self.hle = self.manifold_in_embedding.fit_transform(hl)
-        self.cluster_manifold.fit(self.hle)
-    
-    # takes in the embedding!
-    def predict(self, hl):
-        manifold = self.manifold_in_embedding.transform(hl)
-        y_pred = self.cluster_manifold.predict(manifold)
-        return(np.asarray(y_pred))
+# arguments for clusterer go in a dict
+hdbscan_args = {"min_samples":10,"min_cluster_size":500, 'prediction_data':True}
 
-    # takes in the embedding!
-    def fit_predict(self, hl):
-        self.hle = self.manifold_in_embedding.fit_transform(hl)
-        self.cluster_manifold.fit(self.hle)
-        y_pred = self.cluster_manifold.predict(self.hle)
-        return(np.asarray(y_pred))
+# arguments for manifold learner go in a dict
+umap_args = {"metric":"euclidean", "n_components":2, "n_neighbors":30,"min_dist":0}
+
+# pass the classes and dicts into the generator
+# manifold class, manifold args, cluster class, cluster args
+db = n2d.manifold_cluster_generator(umap.UMAP, umap_args, hdbscan.HDBSCAN, hdbscan_args)
+
+# pass the manifold-cluster tool and the autoencoder into the n2d class
+db_clust = n2d.n2d(ae, db)
+
+# fit
+db_clust.fit(x, epochs = 10)
+
+# the clusterer is a normal hdbscan object
+print(db_clust.clusterer.probabilities_)
+
+print(db_clust.clusterer.labels_)
+
+# access the manifold learner at
+print(db_clust.manifolder)
+
+
+# if the parent classes have a method you can likely use it (make an issue if not)
+db_clust.fit_predict(x, epochs = 10)
+
+# however this will error because hdbscan doesnt have that method
+db_clust.predict(x)
+
+# predict on new data with the approximate prediction
+x_test, y_test = data.load_mnist_test()
+
+# access the parts of the autoencoder within n2d or outside of it
+test_embedding = db_clust.encoder.predict(x_test)
+
+test_embedding - test_n2d_embedding
+# all zeros
+
+test_labels, strengths = hdbscan.approximate_predict(db_clust.clusterer, db_clust.manifolder.transform(test_embedding))
+
+print(test_labels)
+
+print(strengths)
 ```
-
-Now we can run and assess our new clustering method:
-
-```python
-import n2d
-from n2d import datasets as data
-import matplotlib.pyplot as plt
-x, y, y_names = data.load_har()
-
-manifoldKM = UmapKmeans(6)
-kmclust = n2d.n2d(x.shape[-1], manifoldKM, 6)
-
-# now we can continue as normal!
-
-kmclust.fit(x, weights="weights/har-1000-ae_weights.h5")
-
-_ = kmclust.predict(x)
-print(kmclust.assess(y))
-# (0.81668, 0.71208, 0.64484) 
-```
-
-This clearly did not go as well, however we can see that it is very easy to extend this library. We could also try out swapping UMAP for ISOMAP, the clustering method with kmeans, or maybe with a deep clustering technique. 
 
 ### Replacing the embedding mechanism
 
-We can also replace the embedding learner, by writing a new class. In this example we will implement a denoising autoencoder, as demonstrated in [this awesome blog post](https://blog.keras.io/building-autoencoders-in-keras.html)
+We can also pretty easily replace the autoencoder with a new one using the `autoencoder_generator` class:
 
 ```python
-import os
 import n2d
 from n2d import datasets as data
-import random as rn
-import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
-import seaborn as sns
-plt.style.use(['seaborn-white', 'seaborn-paper'])
-sns.set_context("paper", font_scale=1.3)
-matplotlib.use('agg')
-import tensorflow as tf
-import sys
 from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.models import Model
+import seaborn as sns
+import umap
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+plt.style.use(['seaborn-white', 'seaborn-paper'])
+sns.set_context("paper", font_scale=1.3)
 
-
+# load up data
 x,y, y_names = data.load_fashion()
 
-# we decide to use this for some strange reason
-class denoisingAutoEncoder:
-    def __init__(self, input_dim, output_dim, architecture, noise_factor = 0.5, act='relu'):
-        self.noise_factor = noise_factor
-        shape = [input_dim] + architecture + [output_dim]
-        self.dims = shape
-        self.act = act
-        self.x = Input(shape=(self.dims[0],), name='input')
-        self.h = self.x
-        n_stacks = len(self.dims) - 1
+# define number of clusters
+n_clusters = 10
 
-        # this is how I like to set up the networkm however however you want to do it it doesnt matter.
-        # it NEEDS to have a self.encoder attribute
-        for i in range(n_stacks - 1):
-            self.h = Dense(
-                self.dims[i + 1], activation=self.act, name='encoder_%d' % i)(self.h)
-        self.encoder = Dense(
-            self.dims[-1], name='encoder_%d' % (n_stacks - 1))(self.h)
-        self.decoded = Dense(
-            self.dims[-2], name='decoder', activation=self.act)(self.encoder)
-        for i in range(n_stacks - 2, 0, -1):
-            self.decoded = Dense(
-                self.dims[i], activation=self.act, name='decoder_%d' % i)(self.decoded)
-        self.decoded = Dense(self.dims[0], name='decoder_0')(self.decoded)
+# set up manifold learner
+umapgmm = n2d.UmapGMM(n_clusters)
 
-        self.Model = Model(inputs=self.x, outputs=self.decoded)
+# set up parameters for denoising autoencoder
+def add_noise(x, noise_factor):
+    x_clean = x
+    x_noisy = x_clean + noise_factor * np.random.normal(loc = 0.0, scale = 1.0, size = x_clean.shape)
+    x_noisy = np.clip(x_noisy, 0., 1.)
+    return x_noisy
 
-        # NEEDED!!
-        self.encoder = Model(inputs=self.x, outputs=self.encoder)
+# define stages of networks
+hidden_dims = [500, 500, 2000]
+input_dim = x.shape[-1]
+inputs = Input(input_dim)
+encoded = inputs
+for d in hidden_dims:
+    encoded = Dense(d, activation = "relu")(encoded)
+encoded = Dense(n_clusters)(encoded)
+decoded = encoded
+for d in hidden_dims[::-1]:
+    decoded = Dense(d, activation = "relu")(decoded)
+outputs = Dense(input_dim)(decoded)
 
+# inputs: iterable of inputs, center, outputs of ae, lambda for noise (x_lambda is not a necessary argument)
+denoising_ae = n2d.autoencoder_generator((inputs, encoded, outputs), x_lambda = lambda x: add_noise(x, 0.5))
 
-    def add_noise(self, x):
-        x_clean = x
-        x_noisy = x_clean + self.noise_factor * np.random.normal(loc = 0.0, scale = 1.0, size = x_clean.shape)
-        x_noisy = np.clip(x_noisy, 0., 1.)
+# define model
+model = n2d.n2d(denousing_ae, umapgmm)
 
-        return x_clean, x_noisy
+# fit the model
+model.fit(x, epochs=10)
 
-    def fit(self, x, batch_size = 256, pretrain_epochs = 1000,
-                     loss = 'mse', optimizer = 'adam',weights = None,
-                     verbose = 0, weight_id = 'fashion', patience = None):
+# make some predictions
+model.predict(x)
 
-        x, x_noisy = self.add_noise(x)
-        if weights is None:
-            self.Model.compile(
-                loss=loss, optimizer=optimizer
-            )
-            if patience is not None:
-                callbacks = [EarlyStopping(monitor='loss', patience=patience),
-                             ModelCheckpoint(filepath=weight_id,
-                                             monitor='loss',
-                                             save_best_only=True)]
-            else:
-                callbacks = [ModelCheckpoint(filepath=weight_id,
-                                             monitor='loss',
-                                             save_best_only=True)]
-            self.Model.fit(
-                x_noisy, x,
-                batch_size=batch_size,
-                epochs=pretrain_epochs,
-                callbacks=callbacks, verbose=verbose
-            )
-
-            self.Model.save_weights(weight_id)
-        else:
-            self.Model.load_weights(weights)
-
- x,y, y_names = data.load_fashion()
- 
- n_clusters = 10
- 
- model = n2d.n2d(x.shape[-1], manifold_learner=n2d.UmapGMM(n_clusters),
-                 autoencoder = denoisingAutoEncoder, ae_dim = n_clusters,
-                 ae_args={'noise_factor': 0.5})
- 
- model.fit(x, weights="weights/fashion_denoise-1000-ae_weights.h5")
- 
- denoising_preds = model.predict(x)
-
+model.visualize(y, y_names,  n_clusters = n_clusters)
+plt.show()
+print(model.assess(y))
 ```
-
-Lets talk about the ingredients we need for modification:
-
-The class needs to take in a list of dimensions for the model. These dimensions should only include the center layers (read, not input and output). If we want to change the model architecture, we simply put that as the `architecture` argunent of n2d:
-
-```python
-n2d.n2d(..., architecture = [500,500,2000])
-```
-
-This will design the networks to be [input dimensions, 500, 500, 2000, output dimensions], as seen in the denoisingAutoencoder class. If we want to change the autoencoder itself, we need to write a class which accepts the shape, and then some other (preferably with defaults) arguments. This class NEEDS to have a method called fit. Everything else is up to you! To add in extra arguments to whatever your new autoencoder is, you pass them in through a dict called ae_args, as seen in the above example.
-
 
 # Roadmap
 
