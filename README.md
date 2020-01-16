@@ -35,7 +35,9 @@ pip install n2d
 First, lets load in some data. In this example, we will use the Human Activity Recognition(HAR) dataset. In this dataset, sets of time series with data from mobile devices is used to classify what the person is doing (walking, sitting, etc.)
 
 ```python
-from n2d import datasets as data
+import n2d as nd
+import n2d.datasets as data
+
 x,y, y_names = data.load_har()
 ```
 
@@ -56,10 +58,6 @@ Finally, we are ready to get clustering!
 The first step of any not too deep clustering algorithm is to use an autoencoder to learn an embedding, so that is what we will do!
 
 ```python
-import n2d as nd
-import n2d.datasets as data
-
-x, y, y_names = data.load_har()
 
 n_clusters = 6
 ae = n2d.AutoEncoder(x.shape[-1], n_clusters)
