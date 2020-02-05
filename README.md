@@ -6,7 +6,8 @@ Welcome to the stable master branch of N2D!! The active development branch is on
 
 * Finally easily extensible (no more writing classes!)
 * [Model saving and loading!](https://n2d.readthedocs.io/en/latest/quickstart.html#saving-and-loading)
-[x] TF2 ready
+- [x] TF2 ready
+- [ ] more standard implementation of callbacks (coming soon!)
 
 
 # Not Too Deep Clustering
