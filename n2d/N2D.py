@@ -1,15 +1,19 @@
+# Core Library modules
+import pickle
+
+# Third party modules
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import tensorflow as tf
 import umap
+from sklearn import metrics, mixture
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.models import Model, load_model
-from sklearn import metrics, mixture
-import pickle
 
+# Local modules
 from . import linear_assignment as la
 
 
@@ -35,32 +39,51 @@ class AutoEncoder:
     act: string
         The activation function. Defaults to 'relu'
     """
-    def __init__(self, input_dim, latent_dim, architecture = [500, 500, 2000], act='relu', x_lambda = lambda x: x):
+
+    def __init__(
+        self,
+        input_dim,
+        latent_dim,
+        architecture=[500, 500, 2000],
+        act="relu",
+        x_lambda=lambda x: x,
+    ):
         shape = [input_dim] + architecture + [latent_dim]
         self.x_lambda = x_lambda
         self.dims = shape
         self.act = act
-        self.x = Input(shape=(self.dims[0],), name='input')
+        self.x = Input(shape=(self.dims[0],), name="input")
         self.h = self.x
         n_stacks = len(self.dims) - 1
         for i in range(n_stacks - 1):
             self.h = Dense(
-                self.dims[i + 1], activation=self.act, name='encoder_%d' % i)(self.h)
-        self.encoder = Dense(
-            self.dims[-1], name='encoder_%d' % (n_stacks - 1))(self.h)
-        self.decoded = Dense(
-            self.dims[-2], name='decoder', activation=self.act)(self.encoder)
+                self.dims[i + 1], activation=self.act, name="encoder_%d" % i
+            )(self.h)
+        self.encoder = Dense(self.dims[-1], name="encoder_%d" % (n_stacks - 1))(self.h)
+        self.decoded = Dense(self.dims[-2], name="decoder", activation=self.act)(
+            self.encoder
+        )
         for i in range(n_stacks - 2, 0, -1):
             self.decoded = Dense(
-                self.dims[i], activation=self.act, name='decoder_%d' % i)(self.decoded)
-        self.decoded = Dense(self.dims[0], name='decoder_0')(self.decoded)
+                self.dims[i], activation=self.act, name="decoder_%d" % i
+            )(self.decoded)
+        self.decoded = Dense(self.dims[0], name="decoder_0")(self.decoded)
 
         self.Model = Model(inputs=self.x, outputs=self.decoded)
         self.encoder = Model(inputs=self.x, outputs=self.encoder)
 
-    def fit(self, x, batch_size, epochs,
-            loss, optimizer, weights,
-            verbose, weight_id, patience):
+    def fit(
+        self,
+        x,
+        batch_size,
+        epochs,
+        loss,
+        optimizer,
+        weights,
+        verbose,
+        weight_id,
+        patience,
+    ):
         """fit: train the autoencoder.
 
             Parameters:
@@ -93,46 +116,55 @@ class AutoEncoder:
             if not None, the early stopping criterion
             """
 
-        if weights is None: # if there are no weights to load for the encoder, make encoder
-            self.Model.compile(
-                loss=loss, optimizer=optimizer
-            )
+        if (
+            weights is None
+        ):  # if there are no weights to load for the encoder, make encoder
+            self.Model.compile(loss=loss, optimizer=optimizer)
 
-            if weight_id is not None: # if we are going to save the weights somewhere
-                if patience is not None: #if we are going to do early stopping
-                    callbacks = [EarlyStopping(monitor='loss', patience=patience),
-                                 ModelCheckpoint(filepath=weight_id,
-                                                 monitor='loss',
-                                                 save_best_only=True)]
+            if weight_id is not None:  # if we are going to save the weights somewhere
+                if patience is not None:  # if we are going to do early stopping
+                    callbacks = [
+                        EarlyStopping(monitor="loss", patience=patience),
+                        ModelCheckpoint(
+                            filepath=weight_id, monitor="loss", save_best_only=True
+                        ),
+                    ]
                 else:
-                    callbacks = [ModelCheckpoint(filepath=weight_id,
-                                                 monitor='loss',
-                                                 save_best_only=True)]
+                    callbacks = [
+                        ModelCheckpoint(
+                            filepath=weight_id, monitor="loss", save_best_only=True
+                        )
+                    ]
                 # fit the model with the callbacks
                 self.Model.fit(
-                    self.x_lambda(x), x,
+                    self.x_lambda(x),
+                    x,
                     batch_size=batch_size,
                     epochs=epochs,
-                    callbacks=callbacks, verbose=verbose
+                    callbacks=callbacks,
+                    verbose=verbose,
                 )
                 self.Model.save_weights(weight_id)
-            else: # if we are not saving weights
+            else:  # if we are not saving weights
                 if patience is not None:
-                    callbacks = [EarlyStopping(monitor='loss', patience=patience)]
+                    callbacks = [EarlyStopping(monitor="loss", patience=patience)]
                     self.Model.fit(
-                        self.x_lambda(x), x,
+                        self.x_lambda(x),
+                        x,
                         batch_size=batch_size,
                         epochs=epochs,
-                        callbacks=callbacks, verbose=verbose
+                        callbacks=callbacks,
+                        verbose=verbose,
                     )
                 else:
                     self.Model.fit(
-                        self.x_lambda(x), x,
+                        self.x_lambda(x),
+                        x,
                         batch_size=batch_size,
                         epochs=epochs,
-                        verbose=verbose
+                        verbose=verbose,
                     )
-        else: # otherwise load weights
+        else:  # otherwise load weights
             self.Model.load_weights(weights)
 
 
@@ -163,25 +195,26 @@ class UmapGMM:
                 random state
     """
 
-    def __init__(self, n_clusters,
-                 umap_dim=2,
-                 umap_neighbors=10,
-                 umap_min_distance=float(0),
-                 umap_metric='euclidean',
-                 random_state=0
-                 ):
+    def __init__(
+        self,
+        n_clusters,
+        umap_dim=2,
+        umap_neighbors=10,
+        umap_min_distance=float(0),
+        umap_metric="euclidean",
+        random_state=0,
+    ):
         self.n_clusters = n_clusters
         self.manifold_in_embedding = umap.UMAP(
             random_state=random_state,
             metric=umap_metric,
             n_components=umap_dim,
             n_neighbors=umap_neighbors,
-            min_dist=umap_min_distance
+            min_dist=umap_min_distance,
         )
 
         self.cluster_manifold = mixture.GaussianMixture(
-            covariance_type='full',
-            n_components=n_clusters, random_state=random_state
+            covariance_type="full", n_components=n_clusters, random_state=random_state
         )
         self.hle = None
 
@@ -193,19 +226,19 @@ class UmapGMM:
         manifold = self.manifold_in_embedding.transform(hl)
         y_prob = self.cluster_manifold.predict_proba(manifold)
         y_pred = y_prob.argmax(1)
-        return(np.asarray(y_pred))
+        return np.asarray(y_pred)
 
     def predict_proba(self, hl):
         manifold = self.manifold_in_embedding.transform(hl)
         y_prob = self.cluster_manifold.predict_proba(manifold)
-        return(np.asarray(y_prob))
+        return np.asarray(y_prob)
 
     def fit_predict(self, hl):
         self.hle = self.manifold_in_embedding.fit_transform(hl)
         self.cluster_manifold.fit(self.hle)
         y_prob = self.cluster_manifold.predict_proba(self.hle)
         y_pred = y_prob.argmax(1)
-        return(np.asarray(y_pred))
+        return np.asarray(y_pred)
 
 
 def best_cluster_fit(y_true, y_pred):
@@ -231,15 +264,29 @@ def cluster_acc(y_true, y_pred):
 
 def plot(x, y, plot_id, names=None, n_clusters=10):
     viz_df = pd.DataFrame(data=x[:5000])
-    viz_df['Label'] = y[:5000]
+    viz_df["Label"] = y[:5000]
     if names is not None:
-        viz_df['Label'] = viz_df['Label'].map(names)
+        viz_df["Label"] = viz_df["Label"].map(names)
     plt.subplots(figsize=(8, 5))
-    sns.scatterplot(x=0, y=1, hue='Label', legend='full', hue_order=sorted(viz_df['Label'].unique()), palette=sns.color_palette("hls", n_colors=n_clusters),
-                    alpha=.5,
-                    data=viz_df)
-    l = plt.legend(bbox_to_anchor=(-.1, 1.00, 1.1, .5), loc="lower left", markerfirst=True,
-                   mode="expand", borderaxespad=0, ncol=n_clusters + 1, handletextpad=0.01, )
+    sns.scatterplot(
+        x=0,
+        y=1,
+        hue="Label",
+        legend="full",
+        hue_order=sorted(viz_df["Label"].unique()),
+        palette=sns.color_palette("hls", n_colors=n_clusters),
+        alpha=0.5,
+        data=viz_df,
+    )
+    l = plt.legend(
+        bbox_to_anchor=(-0.1, 1.00, 1.1, 0.5),
+        loc="lower left",
+        markerfirst=True,
+        mode="expand",
+        borderaxespad=0,
+        ncol=n_clusters + 1,
+        handletextpad=0.01,
+    )
 
     # l = plt.legend(bbox_to_anchor=(1, 1), loc=2, borderaxespad=0.)
     l.texts[0].set_text("")
@@ -283,7 +330,7 @@ class n2d:
             setting the activation function to relu
     """
 
-    def __init__(self,autoencoder, manifold_learner):
+    def __init__(self, autoencoder, manifold_learner):
         self.autoencoder = autoencoder
         self.manifold_learner = manifold_learner
         self.encoder = self.autoencoder.encoder
@@ -293,10 +340,18 @@ class n2d:
         self.probs = None
         self.hle = None
 
-    def fit(self, x, batch_size=256, epochs=1000,
-            loss='mse', optimizer='adam', weights=None,
-            verbose=1, weight_id=None,
-            patience=None):
+    def fit(
+        self,
+        x,
+        batch_size=256,
+        epochs=1000,
+        loss="mse",
+        optimizer="adam",
+        weights=None,
+        verbose=1,
+        weight_id=None,
+        patience=None,
+    ):
         """fit: train the autoencoder.
 
             Parameters:
@@ -332,12 +387,17 @@ class n2d:
 
             """
 
-        self.autoencoder.fit(x=x,
-                             batch_size=batch_size,
-                             epochs=epochs,
-                             loss=loss,
-                             optimizer=optimizer, weights=weights,
-                             verbose=verbose, weight_id=weight_id, patience=patience)
+        self.autoencoder.fit(
+            x=x,
+            batch_size=batch_size,
+            epochs=epochs,
+            loss=loss,
+            optimizer=optimizer,
+            weights=weights,
+            verbose=verbose,
+            weight_id=weight_id,
+            patience=patience,
+        )
         hl = self.encoder.predict(x)
         self.manifold_learner.fit(hl)
 
@@ -345,29 +405,42 @@ class n2d:
         hl = self.encoder.predict(x)
         self.preds = self.manifold_learner.predict(hl)
         self.hle = self.manifold_learner.hle
-        return(self.preds)
+        return self.preds
 
     def predict_proba(self, x):
         hl = self.encoder.predict(x)
         self.probs = self.manifold_learner.predict_proba(hl)
         self.hle = self.manifold_learner.hle
-        return(self.probs)
+        return self.probs
 
-    def fit_predict(self, x, batch_size=256, epochs=1000,
-                    loss='mse', optimizer='adam', weights=None,
-                    verbose=1, weight_id=None,
-                    patience=None):
+    def fit_predict(
+        self,
+        x,
+        batch_size=256,
+        epochs=1000,
+        loss="mse",
+        optimizer="adam",
+        weights=None,
+        verbose=1,
+        weight_id=None,
+        patience=None,
+    ):
 
-        self.autoencoder.fit(x=x,
-                             batch_size=batch_size,
-                             epochs=epochs,
-                             loss=loss,
-                             optimizer=optimizer, weights=weights,
-                             verbose=verbose, weight_id=weight_id, patience=patience)
+        self.autoencoder.fit(
+            x=x,
+            batch_size=batch_size,
+            epochs=epochs,
+            loss=loss,
+            optimizer=optimizer,
+            weights=weights,
+            verbose=verbose,
+            weight_id=weight_id,
+            patience=patience,
+        )
         hl = self.encoder.predict(x)
         self.preds = self.manifold_learner.fit_predict(hl)
         self.hle = self.manifold_learner.hle
-        return(self.preds)
+        return self.preds
 
     def assess(self, y):
         y = np.asarray(y)
@@ -375,9 +448,9 @@ class n2d:
         nmi = np.round(metrics.normalized_mutual_info_score(y, self.preds), 5)
         ari = np.round(metrics.adjusted_rand_score(y, self.preds), 5)
 
-        return(acc, nmi, ari)
+        return (acc, nmi, ari)
 
-    def visualize(self, y, names,  n_clusters=10):
+    def visualize(self, y, names, n_clusters=10):
         """
             visualize: visualize the embedding and clusters
 
@@ -392,15 +465,13 @@ class n2d:
         y = np.asarray(y)
         y_pred = np.asarray(self.preds)
         hle = self.hle
-        plot(hle, y, 'n2d', names,  n_clusters=n_clusters)
+        plot(hle, y, "n2d", names, n_clusters=n_clusters)
         y_pred_viz, _, _ = best_cluster_fit(y, y_pred)
-        plot(hle, y_pred_viz, 'n2d-predicted', names,  n_clusters=n_clusters)
-
-
+        plot(hle, y_pred_viz, "n2d-predicted", names, n_clusters=n_clusters)
 
 
 def save_n2d(obj, encoder_id, manifold_id):
-    '''
+    """
     save_n2d: save n2d objects
     --------------------------
 
@@ -412,12 +483,13 @@ def save_n2d(obj, encoder_id, manifold_id):
         - obj: the fitted n2d object
         - encoder_id: what to save the encoder as
         - manifold_id: what to save the manifold learner as
-    '''
+    """
     obj.encoder.save(encoder_id)
-    pickle.dump(obj.manifold_learner, open(manifold_id, 'wb'))
+    pickle.dump(obj.manifold_learner, open(manifold_id, "wb"))
 
-def load_n2d(encoder_id, manifold_id): # loaded models can only predict currently
-    '''
+
+def load_n2d(encoder_id, manifold_id):  # loaded models can only predict currently
+    """
     load_n2d: load n2d objects
     --------------------------
 
@@ -428,8 +500,8 @@ def load_n2d(encoder_id, manifold_id): # loaded models can only predict currentl
 
         - encoder_id: where the encoder is stored
         - manifold_id: where the manifold learner/clusterer is stored
-    '''
-    man = pickle.load(open(manifold_id, 'rb'))
+    """
+    man = pickle.load(open(manifold_id, "rb"))
     out = n2d(10, man)
-    out.encoder = load_model(encoder_id, compile = False)
-    return(out)
+    out.encoder = load_model(encoder_id, compile=False)
+    return out

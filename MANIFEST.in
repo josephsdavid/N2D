@@ -5,4 +5,4 @@ recursive-include n2d *.py
 recursive-exclude examples *
 recursive-exclude .ropeproject *
 
-exclude .envrc .gitignore shell.nix 
+exclude .envrc .gitignore shell.nix

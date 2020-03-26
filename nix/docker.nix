@@ -25,5 +25,3 @@ in pkgs.dockerTools.buildImage {
   name = "n2d";
   contents = [n2d];
 }
-
-

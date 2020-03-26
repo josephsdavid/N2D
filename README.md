@@ -1,4 +1,5 @@
 [![Documentation Status](https://readthedocs.org/projects/n2d/badge/?version=latest)](https://n2d.readthedocs.io/en/latest/?badge=latest)
+[![PyPI version](https://badge.fury.io/py/n2d.svg)](https://badge.fury.io/py/n2d)
 
 Welcome to the stable master branch of N2D!! The active development branch is on [dev](https://github.com/josephsdavid/N2D/tree/dev), if you are contributing, please make branches from that!
 
@@ -40,7 +41,7 @@ First, lets load in some data. In this example, we will use the Human Activity R
 import n2d as nd
 import n2d.datasets as data
 
-x,y, y_names = data.load_har()
+x, y, y_names = data.load_har()
 ```
 
 Next, lets set up our deep learning environment, as well as load in necessary libraries:
@@ -50,9 +51,10 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
-plt.style.use(['seaborn-white', 'seaborn-paper'])
+
+plt.style.use(["seaborn-white", "seaborn-paper"])
 sns.set_context("paper", font_scale=1.3)
-matplotlib.use('agg')
+matplotlib.use("agg")
 ```
 
 Finally, we are ready to get clustering!
@@ -60,7 +62,6 @@ Finally, we are ready to get clustering!
 The first step of any not too deep clustering algorithm is to use an autoencoder to learn an embedding, so that is what we will do!
 
 ```python
-
 n_clusters = 6
 ae = n2d.AutoEncoder(x.shape[-1], n_clusters)
 ```
@@ -80,13 +81,13 @@ harcluster = n2d.n2d(ae, manifold_clusterer)
 Next, we fit the data. In this step, the autoencoder is trained on the data, setting up weights.
 
 ```python
-harcluster.fit(x, weight_id = "har.h5")
+harcluster.fit(x, weight_id="har.h5")
 ```
 
 The next time we want to use this autoencoder, we will instead use the weights argument:
 
 ```python
-harcluster.fit(x, weights = "har.h5")
+harcluster.fit(x, weights="har.h5")
 ```
 
 Now we can make a prediction, as well as visualize and assess. In this step, the manifold learner learns the manifold for the data, which is then clustered. By default, it makes the prediction on the data stored internally, however you can specify a new `x` in order to make predictions on new data.
@@ -94,7 +95,7 @@ Now we can make a prediction, as well as visualize and assess. In this step, the
 ```python
 preds = harcluster.predict(x)
 # predictions are stored in harcluster.preds
-harcluster.visualize(y, y_names, n_clusters = n_clusters)
+harcluster.visualize(y, y_names, n_clusters=n_clusters)
 print(harcluster.assess(y))
 # (0.81212, 0.71669, 0.64013)
 ```
@@ -126,17 +127,17 @@ import umap
 
 
 # load up mnist example
-x,y = data.load_mnist()
+x, y = data.load_mnist()
 
 # autoencoder can be just passed normally, see the other examples for extending
 # it
 ae = n2d.AutoEncoder(input_dim=x.shape[-1], latent_dim=40)
 
 # arguments for clusterer go in a dict
-hdbscan_args = {"min_samples":10,"min_cluster_size":500, 'prediction_data':True}
+hdbscan_args = {"min_samples": 10, "min_cluster_size": 500, "prediction_data": True}
 
 # arguments for manifold learner go in a dict
-umap_args = {"metric":"euclidean", "n_components":2, "n_neighbors":30,"min_dist":0}
+umap_args = {"metric": "euclidean", "n_components": 2, "n_neighbors": 30, "min_dist": 0}
 
 # pass the classes and dicts into the generator
 # manifold class, manifold args, cluster class, cluster args
@@ -146,7 +147,7 @@ db = n2d.manifold_cluster_generator(umap.UMAP, umap_args, hdbscan.HDBSCAN, hdbsc
 db_clust = n2d.n2d(ae, db)
 
 # fit
-db_clust.fit(x, epochs = 10)
+db_clust.fit(x, epochs=10)
 
 # the clusterer is a normal hdbscan object
 print(db_clust.clusterer.probabilities_)
@@ -158,7 +159,7 @@ print(db_clust.manifolder)
 
 
 # if the parent classes have a method you can likely use it (make an issue if not)
-db_clust.fit_predict(x, epochs = 10)
+db_clust.fit_predict(x, epochs=10)
 
 # however this will error because hdbscan doesnt have that method
 db_clust.predict(x)
@@ -172,7 +173,9 @@ test_embedding = db_clust.encoder.predict(x_test)
 test_embedding - test_n2d_embedding
 # all zeros
 
-test_labels, strengths = hdbscan.approximate_predict(db_clust.clusterer, db_clust.manifolder.transform(test_embedding))
+test_labels, strengths = hdbscan.approximate_predict(
+    db_clust.clusterer, db_clust.manifolder.transform(test_embedding)
+)
 
 print(test_labels)
 
@@ -193,11 +196,12 @@ import umap
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-plt.style.use(['seaborn-white', 'seaborn-paper'])
+
+plt.style.use(["seaborn-white", "seaborn-paper"])
 sns.set_context("paper", font_scale=1.3)
 
 # load up data
-x,y, y_names = data.load_fashion()
+x, y, y_names = data.load_fashion()
 
 # define number of clusters
 n_clusters = 10
@@ -208,9 +212,12 @@ umapgmm = n2d.UmapGMM(n_clusters)
 # set up parameters for denoising autoencoder
 def add_noise(x, noise_factor):
     x_clean = x
-    x_noisy = x_clean + noise_factor * np.random.normal(loc = 0.0, scale = 1.0, size = x_clean.shape)
-    x_noisy = np.clip(x_noisy, 0., 1.)
+    x_noisy = x_clean + noise_factor * np.random.normal(
+        loc=0.0, scale=1.0, size=x_clean.shape
+    )
+    x_noisy = np.clip(x_noisy, 0.0, 1.0)
     return x_noisy
+
 
 # define stages of networks
 hidden_dims = [500, 500, 2000]
@@ -218,15 +225,17 @@ input_dim = x.shape[-1]
 inputs = Input(input_dim)
 encoded = inputs
 for d in hidden_dims:
-    encoded = Dense(d, activation = "relu")(encoded)
+    encoded = Dense(d, activation="relu")(encoded)
 encoded = Dense(n_clusters)(encoded)
 decoded = encoded
 for d in hidden_dims[::-1]:
-    decoded = Dense(d, activation = "relu")(decoded)
+    decoded = Dense(d, activation="relu")(decoded)
 outputs = Dense(input_dim)(decoded)
 
 # inputs: iterable of inputs, center, outputs of ae, lambda for noise (x_lambda is not a necessary argument)
-denoising_ae = n2d.autoencoder_generator((inputs, encoded, outputs), x_lambda = lambda x: add_noise(x, 0.5))
+denoising_ae = n2d.autoencoder_generator(
+    (inputs, encoded, outputs), x_lambda=lambda x: add_noise(x, 0.5)
+)
 
 # define model
 model = n2d.n2d(denousing_ae, umapgmm)
@@ -237,7 +246,7 @@ model.fit(x, epochs=10)
 # make some predictions
 model.predict(x)
 
-model.visualize(y, y_names,  n_clusters = n_clusters)
+model.visualize(y, y_names, n_clusters=n_clusters)
 plt.show()
 print(model.assess(y))
 ```
@@ -262,7 +271,7 @@ print(model.assess(y))
 
 # Contributing
 
-N2D is a work in progress and is open to suggestions to make it faster, more extensible, and generally more usable. Please make an issue if you have any ideas of how to be more accessible and more usable! 
+N2D is a work in progress and is open to suggestions to make it faster, more extensible, and generally more usable. Please make an issue if you have any ideas of how to be more accessible and more usable!
 
 
 # Citation

@@ -14,4 +14,3 @@ buildPythonPackage rec {
   buildInputs = with pythonSource; [pandas lxml requests] ;
   propogatedBuildInputs =  with pythonSource;[pandas lxml requests];
 }
-

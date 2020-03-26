@@ -1,22 +1,24 @@
-import n2d
-import numpy as np
-import n2d.datasets as data
+# Third party modules
 import hdbscan
+import numpy as np
 import umap
 
+# First party modules
+import n2d
+import n2d.datasets as data
 
 # load up mnist example
-x,y = data.load_mnist()
+x, y = data.load_mnist()
 
 # autoencoder can be just passed normally, see the other examples for extending
 # it
 ae = n2d.AutoEncoder(input_dim=x.shape[-1], latent_dim=40)
 
 # arguments for clusterer go in a dict
-hdbscan_args = {"min_samples":10,"min_cluster_size":500, 'prediction_data':True}
+hdbscan_args = {"min_samples": 10, "min_cluster_size": 500, "prediction_data": True}
 
 # arguments for manifold learner go in a dict
-umap_args = {"metric":"euclidean", "n_components":2, "n_neighbors":30,"min_dist":0}
+umap_args = {"metric": "euclidean", "n_components": 2, "n_neighbors": 30, "min_dist": 0}
 
 # pass the classes and dicts into the generator
 # manifold class, manifold args, cluster class, cluster args
@@ -26,7 +28,7 @@ db = n2d.manifold_cluster_generator(umap.UMAP, umap_args, hdbscan.HDBSCAN, hdbsc
 db_clust = n2d.n2d(ae, db)
 
 # fit
-db_clust.fit(x, epochs = 10)
+db_clust.fit(x, epochs=10)
 
 # the clusterer is a normal hdbscan object
 print(db_clust.clusterer.probabilities_)
@@ -38,7 +40,7 @@ print(db_clust.manifolder)
 
 
 # if the parent classes have a method you can likely use it (make an issue if not)
-db_clust.fit_predict(x, epochs = 10)
+db_clust.fit_predict(x, epochs=10)
 
 # however this will error because hdbscan doesnt have that method
 db_clust.predict(x)
@@ -55,7 +57,9 @@ test_n2d_embedding = db_clust.encoder.predict(x_test)
 test_embedding - test_n2d_embedding
 # all zeros
 
-test_labels, strengths = hdbscan.approximate_predict(db_clust.clusterer, db_clust.manifolder.transform(test_embedding))
+test_labels, strengths = hdbscan.approximate_predict(
+    db_clust.clusterer, db_clust.manifolder.transform(test_embedding)
+)
 
 print(test_labels)
 

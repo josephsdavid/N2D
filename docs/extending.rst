@@ -3,7 +3,7 @@ Advanced Usage
 
 As mentioned earlier, N2D is an entirely extensible framework for not too deep clustering. In this section we will discuss modifying the clustering/manifold learning methods, and modifying the autoencoder. The independence of each step of N2D means we can change the autoencoder into a convolutional autoencoder or some other more complex LSTM based autoencoder, depending on the application, or change clustering method. We will discuss changing both parts of the algorithm below.
 
-Changing the Manifold Clustering Step: 
+Changing the Manifold Clustering Step:
 ------------------------------------------
 
 To extend N2D to include your favorite autoencoder or clustering algorithm, you can use either of the two **generator** classes. To replace the manifold clustering step, we use the **manifold_cluster_generator** class. This class takes in 4 arguments:
@@ -25,7 +25,7 @@ Objects created by **generators** can be passed directly into N2D, without needi
         x, y = data.load_mnist()
 
 First, we make our autoencoder, for now using the AutoEncoder class::
-        
+
         ae = n2d.AutoEncoder(input_dim = x.shape[-1], latent_dim = 20) # chosen arbitrarily
 
 Next, lets define the arguments we wish to initialize hdbscan and umap with. Please note these values are chosen either arbitrarily or for visualization::
@@ -51,7 +51,7 @@ We can fit as usual::
 
 Because this is dbscan, after fitting we can say we are done! The fitted n2d object can do anything the parent clustering class can do (it also shares its limitations). This means that we can just go ahead and grab the predictions which hdbscan already so kindly made for us::
 
-        # the probabilities 
+        # the probabilities
         print(n2d_db.clusterer.probabilities_)
         # the labels
         print(n2d_db.clusterer.labels_)
@@ -121,7 +121,7 @@ Next, as usual, we are going to make our autoencoder, however this time without 
         outputs = Dense(input_dim)(decoded)
 
 Lets go ahead and define our first set of inputs for the **autoencoder_generator** class::
-        
+
         ae_stages = (inputs, encoded, outputs)
 
 Again, the autoencoder_generator class requires an iterable containing the input layer, the encoding, and the decoded output layer of the model. The rest is taken care of internally. As this is a denoising autoencoder, lets also write a function that adds noise to our data::
@@ -134,7 +134,7 @@ Again, the autoencoder_generator class requires an iterable containing the input
 
 
 Now we can go ahead and generate an autoencoder for N2D::
-      
+
         denoising_ae = n2d.autoencoder_generator(ae_stages, x_lambda = lambda x: add_noise(x, 0.5))
 
 Finally, lets initialize UmapGMM and our model, and make a quick prediction::

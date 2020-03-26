@@ -19,7 +19,7 @@ let
     umapVar = umap;
   };
 
-in 
+in
 pkgs.stdenv.mkDerivation rec {
   name = "n2d-env";
   env = pkgs.buildEnv {name = name; paths = buildInputs;};

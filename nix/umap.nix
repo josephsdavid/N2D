@@ -14,4 +14,3 @@ buildPythonPackage rec {
   buildInputs = with pythonSource; [numpy scipy scikitlearn numba] ;
   propogatedBuildInputs =  with pythonSource;[numba];
 }
-
