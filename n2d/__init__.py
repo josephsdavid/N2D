@@ -1,11 +1,4 @@
-from .N2D import AutoEncoder
-from .N2D import UmapGMM
-
-from .N2D import n2d
-from .N2D import save_n2d
-from .N2D import load_n2d
-
-from . import datasets
-from .generators import manifold_cluster_generator
-from .generators import autoencoder_generator
-from . import linear_assignment
+# Local modules
+from . import datasets, linear_assignment
+from .generators import autoencoder_generator, manifold_cluster_generator
+from .N2D import AutoEncoder, UmapGMM, load_n2d, n2d, save_n2d

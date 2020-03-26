@@ -33,7 +33,7 @@ To actually load the data, we import the datasets from n2d, shown below along wi
        from n2d import datasets as data
 
        # imports mnist
-       data.load_mnist() # x, y 
+       data.load_mnist() # x, y
 
        # imports mnist_test
        data.load_mnist_test() # x, y
@@ -59,7 +59,7 @@ Building the model
 
 To build an N2D model, we are going to need 2 pieces: an autoencoder, and a manifold clustering algorithm. Both are provided with the library thankfully! First, we will load up any libraries we want to use in this example::
 
-        
+
       import n2d
       import matplotlib
       import matplotlib.pyplot as plt
@@ -80,12 +80,12 @@ The AutoEncoder Class
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 So lets go ahead and initialize the autoencoder. This again uses the N2D AutoEncoder class::
-        
+
         n_clusters = 6
         latent_dim = n_clusters
 
         ae = n2d.AutoEncoder(x.shape[-1], latent_dim)
-        
+
 
 
 In the simplest possible example, this is it! The Autoencoder class **requires** the input dimensions of the data, and the number of dimensions we would like to reduce that to (latent dimensions, embedding dimensions). We can also modify the internal architecture of the AutoEncoder with the **architecture** argument. By default, the shape of the **encoder** is *[input_dim, 500, 500, 2000, latent_dim]* and the shape of the **decoder** is *[latent_dim, 2000, 500, 500, input_dim]*, or the reverse of the encoder. The autoencoder consists of these two ends stacked together, giving a network with dimensions: *[input_dim, 500, 500, 2000, latent_dim, 2000, 500, 500, input_dim]*. The shape of the network in between the input and latent dimensions can be replaced with a list, for example if we wanted the first three layers of the encoder to be 2000 neurons, and the next 4000 we would say (expecting the decoder to be the reverse of this)::
@@ -126,7 +126,7 @@ Clustering the Embedded Manifold: UmapGMM
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Lets talk a bit more about how we learn the manifold and cluster it!! This is done primarily with the UmapGMM object ::
-        
+
         manifoldGMM = n2d.UmapGMM(n_clusters)
 
 This initializes the hybrid manifold learner/clustering arguments. In general, UmapGMM performs best, but in a later section we will talk about replacing it with other clustering/manifold learning techniques. The arguments for UmapGMM are shown below:
@@ -147,7 +147,7 @@ This initializes the hybrid manifold learner/clustering arguments. In general, U
           - Number of dimensions of the manifold.
         * - umap_neighbors
           - 10
-          - Number of nearest neighbors to consider for UMAP. Defaults to 10, to recreate cutting edge results shown in the paper, however often 20 is a better value 
+          - Number of nearest neighbors to consider for UMAP. Defaults to 10, to recreate cutting edge results shown in the paper, however often 20 is a better value
         * - umap_min_distance
           - float(0)
           - Minimum distance between points within the manifold. Smaller numbers get tighter, better clusters while larger numbers are better for visualization
@@ -165,7 +165,7 @@ Finally, we are ready to get clustering!
 Initializing N2D
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 Next, we initialize the **n2d** object. We feed it first an autoencoder, and second a manifold clusterer::
-        
+
         harcluster = n2d.n2d(ae, manifoldGMM)
 
 and that's it! Now we can fit and predict!
@@ -177,7 +177,7 @@ Learning an Embedding
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Next, we need to train the autoencoder to learn the embedding. This step is pretty easy. As this is our first run of the autoencoder, the only thing we need to input is the name we would like the weights to be stored under, as well as create a weights directory. ::
-        
+
 
         harcluster.fit(x, weight_id = "weights/har-1000-ae_weights.h5")
 
@@ -218,14 +218,14 @@ This will train the autoencoder, and store the weights in **weights/[WEIGHT_ID]-
 Please note the patience parameter! It can save lots of time. Also please note, if you do not tell N2D where to save the model weights, it will not save them!!
 
 On our next round of the autoencoder, while we fiddle with clustering algorithms, visualizations, or whatever, we can use the preTrainEncoder method to load in our weights as follows. ::
-        
+
         harcluster.fit(x, weights = "weights/har-1000-ae_weights.h5")
 
 
 
 
 Finally, we can actually cluster the data! To do this, we pass the clustering mechanism into the N2D predict method. ::
-        
+
         preds = harcluster.predict(x)
 
 This will save the prediction internally and externally (for visualization convenience).
@@ -240,7 +240,7 @@ fit_predict
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We can wrap these two commands into one using the fit_predict method, which takes the same arguments as fit::
-        
+
         harcluster.fit_predict(x, weight_id = "weights/har-1000-ae_weights.h5")
 
 predict_proba
@@ -253,14 +253,14 @@ Assessing and Visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To assess the quality of the clusters, you can A) use some custom assessment method on the predictions or B) if you have labels run ::
-        
+
         harcluster.assess(y)
-        # (0.81212, 0.71669, 0.64013) 
+        # (0.81212, 0.71669, 0.64013)
 
-This prints out the cluster accuracy, NMI, and ARI metrics for our clusters. These values are top of the line for all clustering models on HAR. 
+This prints out the cluster accuracy, NMI, and ARI metrics for our clusters. These values are top of the line for all clustering models on HAR.
 
 
-To visualize, we again have a built in method as well as tools for creating your own visualizations: 
+To visualize, we again have a built in method as well as tools for creating your own visualizations:
 
 **Built in**::
 
@@ -270,7 +270,7 @@ To visualize, we again have a built in method as well as tools for creating your
 **Custom** :
 
 We need a few things for a visualization: The embedding and the the predictions. The embedding is stored in ::
-        
+
         harcluster.hle
 
 You typically want to plot the embedding as x and the clusters as y! Lets also check out what our clusters look like!
@@ -299,12 +299,12 @@ Predicting on new data
 ---------------------------------
 
 Once the everything has been fitted, we can easily make fast predictions on new data::
-        
+
         x_test, y_test = some test set
         new_preds = harcluster.predict(x_test)
 
 
-This will use the autoencoder to map the data into the proper number of dimensions, and then transform it to the manifold learned during fitting, and finally cluster it using the trained clustering mechanism. 
+This will use the autoencoder to map the data into the proper number of dimensions, and then transform it to the manifold learned during fitting, and finally cluster it using the trained clustering mechanism.
 
 
 
@@ -320,4 +320,3 @@ to load, we follow a similar mechanism::
         hcluster = n2d.load_n2d('models/har.h5', 'models/hargmm.sav')
 
 Please note that **for rapid development and experimentation** you should use the **weight saving** in the *.fit* method, as that is its intended use. You can train the network and then fiddle around with the rest of the model. This means that **save_n2d** and **load_n2d** should **only be used for deploying the model**.
-

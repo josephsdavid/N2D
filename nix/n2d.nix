@@ -8,7 +8,7 @@ in
       pname = "n2d";
       version = "0.3.2";
 
-    
+
       src = packs.nix-gitignore.gitignoreSource additionalIgnores ./..;
 
       buildInputs = [

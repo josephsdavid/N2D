@@ -60,7 +60,7 @@ in
       python37Packages.statsmodels
     ];
     shellHook = ''
-      export SOURCE_DATE_EPOCH=$(date +%s) 
+      export SOURCE_DATE_EPOCH=$(date +%s)
       '';
 
   }

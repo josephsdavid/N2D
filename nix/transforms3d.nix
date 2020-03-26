@@ -18,4 +18,3 @@ buildPythonPackage rec {
       ] ;
   propogatedBuildInputs = with pythonSource; [numpy] ;
 }
-

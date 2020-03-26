@@ -5,10 +5,12 @@ Hungarian algorithm (also known as Munkres algorithm).
 # Based on original code by Brain Clapper, adapted to NumPy by Gael Varoquaux.
 # Heavily refactored by Lars Buitinck.
 
+# Third party modules
 # Copyright (c) 2008 Brian M. Clapper <bmc@clapper.org>, Gael Varoquaux
 # Author: Brian M. Clapper, Gael Varoquaux
 # LICENSE: BSD
 import numpy as np
+
 # borrowed from sklearn
 
 
@@ -62,7 +64,7 @@ class _HungarianState:
         # will not be able to work correctly. Therefore, we
         # transpose the cost function when needed. Just have to
         # remember to swap the result columns back later.
-        transposed = (cost_matrix.shape[1] < cost_matrix.shape[0])
+        transposed = cost_matrix.shape[1] < cost_matrix.shape[0]
         if transposed:
             self.C = (cost_matrix.T).copy()
         else:
@@ -122,6 +124,7 @@ def _hungarian(cost_matrix):
 # Individual steps of the algorithm follow, as a state machine: they return
 # the next step to be taken (function to be called), if any.
 
+
 def _step1(state):
     """Steps 1 and 2 in the Wikipedia page."""
 
@@ -147,7 +150,7 @@ def _step3(state):
     the starred zeros describe a complete set of unique assignments.
     In this case, Go to DONE, otherwise, Go to Step 4.
     """
-    marked = (state.marked == 1)
+    marked = state.marked == 1
     state.col_uncovered[np.any(marked, axis=0)] = False
 
     if marked.sum() < state.C.shape[0]:
@@ -187,7 +190,8 @@ def _step4(state):
                 state.row_uncovered[row] = False
                 state.col_uncovered[col] = True
                 covered_C[:, col] = C[:, col] * (
-                    state.row_uncovered.astype(dtype=np.int, copy=False))
+                    state.row_uncovered.astype(dtype=np.int, copy=False)
+                )
                 covered_C[row] = 0
 
 
@@ -254,4 +258,3 @@ def _step6(state):
         state.C[np.logical_not(state.row_uncovered)] += minval
         state.C[:, state.col_uncovered] -= minval
     return _step4
-

@@ -27,7 +27,7 @@ The idea of N2D is as follows: by first learning an embedding of the data, and t
 Purpose of the library
 -----------------------
 
-The purpose of this library is to provide A) an easy library for regular use and B) an extensible framework for future research. 
+The purpose of this library is to provide A) an easy library for regular use and B) an extensible framework for future research.
 
 
 Citation

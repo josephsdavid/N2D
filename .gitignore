@@ -28,3 +28,6 @@ MANIFEST
 
 # Rope project settings
 .ropeproject
+
+tests/reports/
+.coverage
